@@ -26,7 +26,7 @@ namespace pocketmine\item\enchantment;
 use pocketmine\event\entity\EntityDamageEvent;
 use function constant;
 use function defined;
-use function strtoupper;
+use function mb_strtoupper;
 
 /**
  * Manages enchantment type data.
@@ -69,6 +69,7 @@ class Enchantment{
 	public const MULTISHOT = 33;
 	public const PIERCING = 34;
 	public const QUICK_CHARGE = 35;
+	public const SOUL_SPEED = 36;
 
 	public const RARITY_COMMON = 10;
 	public const RARITY_UNCOMMON = 5;
@@ -161,7 +162,7 @@ class Enchantment{
 	}
 
 	public static function getEnchantmentByName(string $name) : ?Enchantment{
-		$const = Enchantment::class . "::" . strtoupper($name);
+		$const = Enchantment::class . "::" . mb_strtoupper($name);
 		if(defined($const)){
 			return self::getEnchantment(constant($const));
 		}

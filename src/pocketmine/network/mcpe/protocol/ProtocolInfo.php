@@ -45,9 +45,9 @@ interface ProtocolInfo{
 	/** Array of all accepted protocol versions */
 	public const ACCEPTED_PROTOCOLS = [self::CURRENT_PROTOCOL, self::PROTOCOL_1_14_60, self::PROTOCOL_1_14_0];
 	/** Current Minecraft PE version reported by the server. This is usually the earliest currently supported version. */
-	public const MINECRAFT_VERSION = 'v1.16.0';
+	public const MINECRAFT_VERSION = 'v1.16.0.67 beta';
 	/** Version number sent to clients in ping responses. */
-	public const MINECRAFT_VERSION_NETWORK = '1.16.0';
+	public const MINECRAFT_VERSION_NETWORK = '1.16.0.67';
 
 	public const LOGIN_PACKET = 0x01;
 	public const PLAY_STATUS_PACKET = 0x02;
@@ -174,7 +174,7 @@ interface ProtocolInfo{
 	public const LEVEL_SOUND_EVENT_PACKET = 0x7b;
 	public const LEVEL_EVENT_GENERIC_PACKET = 0x7c;
 	public const LECTERN_UPDATE_PACKET = 0x7d;
-	public const VIDEO_STREAM_CONNECT_PACKET = 0x7e;
+
 	public const ADD_ENTITY_PACKET = 0x7f;
 	public const REMOVE_ENTITY_PACKET = 0x80;
 	public const CLIENT_CACHE_STATUS_PACKET = 0x81;
@@ -194,5 +194,16 @@ interface ProtocolInfo{
 	public const NETWORK_SETTINGS_PACKET = 0x8f;
 	public const PLAYER_AUTH_INPUT_PACKET = 0x90;
 	public const CREATIVE_CONTENT_PACKET = 0x91;
+	public const PLAYER_ENCHANT_OPTIONS_PACKET = 0x92;
+	public const ITEM_STACK_REQUEST_PACKET = 0x93;
+	public const ITEM_STACK_RESPONSE_PACKET = 0x94;
+	public const PLAYER_ARMOR_DAMAGE_PACKET = 0x95;
+	public const CODE_BUILDER_PACKET = 0x96;
+	public const UPDATE_PLAYER_GAME_TYPE_PACKET = 0x97;
+	public const EMOTE_LIST_PACKET = 0x98;
+	public const POSITION_TRACKING_D_B_SERVER_BROADCAST_PACKET = 0x99;
+	public const POSITION_TRACKING_D_B_CLIENT_REQUEST_PACKET = 0x9a;
+	public const DEBUG_INFO_PACKET = 0x9b;
+	public const PACKET_VIOLATION_WARNING_PACKET = 0x9c;
 
 }

@@ -72,6 +72,7 @@ use pocketmine\metadata\Metadatable;
 use pocketmine\metadata\MetadataValue;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
 use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
@@ -80,7 +81,6 @@ use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\SetDifficultyPacket;
 use pocketmine\network\mcpe\protocol\SetTimePacket;
-use pocketmine\network\mcpe\protocol\types\RuntimeBlockMapping;
 use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\Player;
 use pocketmine\plugin\Plugin;
@@ -217,12 +217,18 @@ class Level implements ChunkManager, Metadatable{
 	/** @var Vector3[][] */
 	private $changedBlocks = [];
 
-	/** @var ReversePriorityQueue */
+	/**
+	 * @var ReversePriorityQueue
+	 * @phpstan-var ReversePriorityQueue<int, Vector3>
+	 */
 	private $scheduledBlockUpdateQueue;
 	/** @var int[] */
 	private $scheduledBlockUpdateQueueIndex = [];
 
-	/** @var \SplQueue */
+	/**
+	 * @var \SplQueue
+	 * @phpstan-var \SplQueue<int>
+	 */
 	private $neighbourBlockUpdateQueue;
 
 	/** @var Player[][] */

@@ -25,8 +25,8 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\item\Item;
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\types\ItemStackWrapper;
 
 class InventorySlotPacket extends DataPacket{
 	public const NETWORK_ID = ProtocolInfo::INVENTORY_SLOT_PACKET;
@@ -35,25 +35,19 @@ class InventorySlotPacket extends DataPacket{
 	public $windowId;
 	/** @var int */
 	public $inventorySlot;
-	/** @var Item */
+	/** @var ItemStackWrapper */
 	public $item;
 
 	protected function decodePayload(int $protocolId){
 		$this->windowId = $this->getUnsignedVarInt();
 		$this->inventorySlot = $this->getUnsignedVarInt();
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->getVarInt();
-		}
-		$this->item = $this->getSlot();
+		$this->item = ItemStackWrapper::read($this, $protocolId);
 	}
 
 	protected function encodePayload(int $protocolId){
 		$this->putUnsignedVarInt($this->windowId);
 		$this->putUnsignedVarInt($this->inventorySlot);
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putVarInt($this->item->isNull() ? 0 : 1);
-		}
-		$this->putSlot($this->item);
+		$this->item->write($this, $protocolId);
 	}
 
 	public function getProtocolVersions() : array{

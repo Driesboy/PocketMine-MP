@@ -38,7 +38,6 @@ class NetworkInventoryAction{
 
 	public const SOURCE_WORLD = 2; //drop/pickup item entity
 	public const SOURCE_CREATIVE = 3;
-	public const SOURCE_CRAFTING_GRID = 100;
 	public const SOURCE_TODO = 99999;
 
 	/**
@@ -83,15 +82,16 @@ class NetworkInventoryAction{
 	public $oldItem;
 	/** @var Item */
 	public $newItem;
-	/** @var int */
-	public $stackNetworkId;
+	/** @var int|null */
+	public $newItemStackId = null;
 
 	/**
 	 * @param InventoryTransactionPacket $packet
+	 * @param bool                       $hasItemStackIds
 	 *
 	 * @return $this
 	 */
-	public function read(InventoryTransactionPacket $packet){
+	public function read(InventoryTransactionPacket $packet, bool $hasItemStackIds){
 		$this->sourceType = $packet->getUnsignedVarInt();
 
 		switch($this->sourceType){
@@ -106,11 +106,6 @@ class NetworkInventoryAction{
 			case self::SOURCE_TODO:
 				$this->windowId = $packet->getVarInt();
 				break;
-			case self::SOURCE_CRAFTING_GRID:
-				//if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				//	$this->windowId = $packet->getVarInt();
-				//}
-				break;
 			default:
 				throw new \UnexpectedValueException("Unknown inventory action source type $this->sourceType");
 		}
@@ -118,9 +113,8 @@ class NetworkInventoryAction{
 		$this->inventorySlot = $packet->getUnsignedVarInt();
 		$this->oldItem = $packet->getSlot();
 		$this->newItem = $packet->getSlot();
-
-		if($packet->hasNetworkIds){
-			$this->stackNetworkId = $packet->getVarInt();
+		if($hasItemStackIds){
+			$this->newItemStackId = $packet->readGenericTypeNetworkId();
 		}
 
 		return $this;
@@ -131,7 +125,7 @@ class NetworkInventoryAction{
 	 *
 	 * @return void
 	 */
-	public function write(InventoryTransactionPacket $packet){
+	public function write(InventoryTransactionPacket $packet, bool $hasItemStackIds){
 		$packet->putUnsignedVarInt($this->sourceType);
 
 		switch($this->sourceType){
@@ -143,11 +137,6 @@ class NetworkInventoryAction{
 				break;
 			case self::SOURCE_CREATIVE:
 				break;
-			case self::SOURCE_CRAFTING_GRID:
-				//if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				//	$packet->putVarInt($this->windowId);
-				//}
-				break;
 			case self::SOURCE_TODO:
 				$packet->putVarInt($this->windowId);
 				break;
@@ -158,9 +147,11 @@ class NetworkInventoryAction{
 		$packet->putUnsignedVarInt($this->inventorySlot);
 		$packet->putSlot($this->oldItem);
 		$packet->putSlot($this->newItem);
-
-		if($packet->hasNetworkIds){
-			$packet->putVarInt($this->stackNetworkId);
+		if($hasItemStackIds){
+			if($this->newItemStackId === null){
+				throw new \InvalidStateException("Item stack ID for newItem must be provided");
+			}
+			$packet->writeGenericTypeNetworkId($this->newItemStackId);
 		}
 	}
 
@@ -176,7 +167,7 @@ class NetworkInventoryAction{
 		}
 		switch($this->sourceType){
 			case self::SOURCE_CONTAINER:
-				if($this->windowId === ContainerIds::UI and $this->inventorySlot > 0 and $player->getProtocolId() < ProtocolInfo::PROTOCOL_1_16_0){
+				if($this->windowId === ContainerIds::UI and $this->inventorySlot > 0){
 					if($this->inventorySlot === 50){
 						return null; //useless noise
 					}
@@ -234,19 +225,6 @@ class NetworkInventoryAction{
 
 				//TODO: more stuff
 				throw new \UnexpectedValueException("Player " . $player->getName() . " has no open container with window ID $this->windowId");
-				break;
-			case self::SOURCE_CRAFTING_GRID:
-				if($player->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-					//These types need special handling.
-					switch($this->windowId){
-						case self::SOURCE_TYPE_CRAFTING_RESULT:
-						case self::SOURCE_TYPE_CRAFTING_USE_INGREDIENT:
-							return null;
-					}
-
-					//TODO: more stuff
-					throw new \UnexpectedValueException("Player " . $player->getName() . " has no open container with window ID $this->windowId");
-				}
 				break;
 			default:
 				throw new \UnexpectedValueException("Unknown inventory source type $this->sourceType");

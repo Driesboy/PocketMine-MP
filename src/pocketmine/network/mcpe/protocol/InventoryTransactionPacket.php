@@ -27,6 +27,7 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\types\ContainerIds;
+use pocketmine\network\mcpe\protocol\types\InventoryTransactionChangedSlotsHack;
 use pocketmine\network\mcpe\protocol\types\NetworkInventoryAction;
 use function count;
 
@@ -49,16 +50,12 @@ class InventoryTransactionPacket extends DataPacket{
 	public const USE_ITEM_ON_ENTITY_ACTION_INTERACT = 0;
 	public const USE_ITEM_ON_ENTITY_ACTION_ATTACK = 1;
 
-	/** @var int */
-	public $legacyRequestId;
-	///** @var LegacySetItemSlot[] */
-	public $legacySetItemSlots = [];
+	public $requestId;
+	/** @var InventoryTransactionChangedSlotsHack[] */
+	public $requestChangedSlots;
 
 	/** @var int */
 	public $transactionType;
-
-	/** @var bool */
-	public $hasNetworkIds = false;
 
 	/**
 	 * @var bool
@@ -73,39 +70,35 @@ class InventoryTransactionPacket extends DataPacket{
 	 */
 	public $isFinalCraftingPart = false;
 
+	/** @var bool */
+	public $hasItemStackIds;
+
 	/** @var NetworkInventoryAction[] */
 	public $actions = [];
 
 	/** @var \stdClass */
 	public $trData;
 
-	protected function decodePayload(int $protocolId){
+	protected function decodePayload(int $protocolId): void{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->legacyRequestId = $this->getVarInt();
-
-			if($this->legacyRequestId  !== 0){
-				for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-					$containerId = $this->getByte();
-
-					$slots = [];
-					for($j = 0, $slotCount = $this->getUnsignedVarInt(); $j < $slotCount; ++$j){
-						$slots[] = $this->getByte();
-					}
-
-					//$this->legacySetItemSlots[] = new LegacySetItemSlot($containerId, $slots);
+			$this->requestId = $this->readGenericTypeNetworkId();
+			$this->requestChangedSlots = [];
+			if($this->requestId !== 0){
+				for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
+					$this->requestChangedSlots[] = InventoryTransactionChangedSlotsHack::read($this);
 				}
 			}
 		}
 
 		$this->transactionType = $this->getUnsignedVarInt();
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->hasNetworkIds = $this->getBool();
+			$this->hasItemStackIds = $this->getBool();
 		}else{
-			$this->hasNetworkIds = false;
+			$this->hasItemStackIds = false;
 		}
 
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$this->actions[] = $action = (new NetworkInventoryAction())->read($this);
+			$this->actions[] = $action = (new NetworkInventoryAction())->read($this, $this->hasItemStackIds);
 
 			if($protocolId < ProtocolInfo::PROTOCOL_1_16_0){
 				if(
@@ -167,28 +160,19 @@ class InventoryTransactionPacket extends DataPacket{
 
 	protected function encodePayload(int $protocolId){
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putVarInt($this->legacyRequestId);
-			if($this->legacyRequestId > 0){
-				$this->putUnsignedVarInt(count($this->legacySetItemSlots));
-				foreach($this->legacySetItemSlots as $setItemSlot){
-					$this->putByte($setItemSlot->containerId);
-
-					$this->putUnsignedVarInt(count($setItemSlot->slots));
-					foreach($setItemSlot->slots as $slot){
-						$this->putByte($slot);
-					}
+			$this->writeGenericTypeNetworkId($this->requestId);
+			if($this->requestId !== 0){
+				$this->putUnsignedVarInt(count($this->requestChangedSlots));
+				foreach($this->requestChangedSlots as $changedSlots){
+					$changedSlots->write($this);
 				}
 			}
 		}
 		$this->putUnsignedVarInt($this->transactionType);
 
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putBool($this->hasNetworkIds);
-		}
-
 		$this->putUnsignedVarInt(count($this->actions));
 		foreach($this->actions as $action){
-			$action->write($this);
+			$action->write($this, $this->hasItemStackIds);
 		}
 
 		switch($this->transactionType){

@@ -28,6 +28,7 @@ namespace pocketmine\network\mcpe\protocol;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\NetworkLittleEndianNBTStream;
 use pocketmine\nbt\tag\ListTag;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\NetworkBinaryStream;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\types\EducationEditionOffer;
@@ -35,7 +36,7 @@ use pocketmine\network\mcpe\protocol\types\GameRuleType;
 use pocketmine\network\mcpe\protocol\types\GeneratorType;
 use pocketmine\network\mcpe\protocol\types\MultiplayerGameVisibility;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
-use pocketmine\network\mcpe\protocol\types\RuntimeBlockMapping;
+use pocketmine\network\mcpe\protocol\types\SpawnSettings;
 use function count;
 use function file_get_contents;
 use function json_decode;
@@ -66,12 +67,8 @@ class StartGamePacket extends DataPacket{
 
 	/** @var int */
 	public $seed;
-	/** @var int */
-	public $type = 0;
-	/** @var string */
-	public $biome = '';
-	/** @var int */
-	public $dimension;
+	/** @var SpawnSettings */
+	public $spawnSettings;
 	/** @var int */
 	public $generator = GeneratorType::OVERWORLD;
 	/** @var int */
@@ -93,7 +90,7 @@ class StartGamePacket extends DataPacket{
 	/** @var bool */
 	public $hasEduFeaturesEnabled = false;
 	/** @var string */
-	public $educationProductId = '';
+	public $eduProductUUID = "";
 	/** @var float */
 	public $rainLevel;
 	/** @var float */
@@ -143,17 +140,17 @@ class StartGamePacket extends DataPacket{
 	public $isWorldTemplateOptionLocked = false;
 	/** @var bool */
 	public $onlySpawnV1Villagers = false;
-
 	/** @var string */
 	public $vanillaVersion = ProtocolInfo::MINECRAFT_VERSION_NETWORK;
 	/** @var int */
-	public $worldWidth = 16;
+	public $limitedWorldWidth = 0;
 	/** @var int */
-	public $worldDepth = 16;
+	public $limitedWorldLength = 0;
 	/** @var bool */
-	public $netherType = false;
-	/** @var bool */
-	public $experimentalGameplay = false;
+	public $isNewNether = true;
+	/** @var bool|null */
+	public $experimentalGameplayOverride = null;
+
 	/** @var string */
 	public $levelId = ""; //base64 string, usually the same as world folder name in vanilla
 	/** @var string */
@@ -180,6 +177,8 @@ class StartGamePacket extends DataPacket{
 	 * @phpstan-var array<string, int>|null
 	 */
 	public $itemTable = null;
+	/** @var bool */
+	public $enableNewInventorySystem = false; //TODO
 
 	protected function decodePayload(int $protocolId){
 		$this->entityUniqueId = $this->getEntityUniqueId();
@@ -193,11 +192,7 @@ class StartGamePacket extends DataPacket{
 
 		//Level settings
 		$this->seed = $this->getVarInt();
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->type = $this->getShort();
-			$this->biome = $this->getString();
-		}
-		$this->dimension = $this->getVarInt();
+		$this->spawnSettings = SpawnSettings::read($this, $protocolId);
 		$this->generator = $this->getVarInt();
 		$this->worldGamemode = $this->getVarInt();
 		$this->difficulty = $this->getVarInt();
@@ -207,7 +202,7 @@ class StartGamePacket extends DataPacket{
 		$this->eduEditionOffer = $this->getVarInt();
 		$this->hasEduFeaturesEnabled = $this->getBool();
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->educationProductId = $this->getString();
+			$this->eduProductUUID = $this->getString();
 		}
 		$this->rainLevel = $this->getLFloat();
 		$this->lightningLevel = $this->getLFloat();
@@ -230,14 +225,18 @@ class StartGamePacket extends DataPacket{
 		$this->isFromWorldTemplate = $this->getBool();
 		$this->isWorldTemplateOptionLocked = $this->getBool();
 		$this->onlySpawnV1Villagers = $this->getBool();
-
 		$this->vanillaVersion = $this->getString();
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->worldWidth = $this->getLInt();
-			$this->worldDepth = $this->getLInt();
-			$this->netherType = $this->getBool();
-			$this->experimentalGameplay = $this->getBool();
+			$this->limitedWorldWidth = $this->getLInt();
+			$this->limitedWorldLength = $this->getLInt();
+			$this->isNewNether = $this->getBool();
+			if($this->getBool()){
+				$this->experimentalGameplayOverride = $this->getBool();
+			}else{
+				$this->experimentalGameplayOverride = null;
+			}
 		}
+
 		$this->levelId = $this->getString();
 		$this->worldName = $this->getString();
 		$this->premiumWorldTemplateId = $this->getString();
@@ -263,7 +262,7 @@ class StartGamePacket extends DataPacket{
 
 		$this->multiplayerCorrelationId = $this->getString();
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->itemNetStackManager = $this->getBool();
+			$this->enableNewInventorySystem = $this->getBool();
 		}
 	}
 
@@ -279,11 +278,7 @@ class StartGamePacket extends DataPacket{
 
 		//Level settings
 		$this->putVarInt($this->seed);
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putShort($this->type);
-			$this->putString($this->biome);
-		}
-		$this->putVarInt($this->dimension);
+		$this->spawnSettings->write($this, $protocolId);
 		$this->putVarInt($this->generator);
 		$this->putVarInt($this->worldGamemode);
 		$this->putVarInt($this->difficulty);
@@ -293,7 +288,7 @@ class StartGamePacket extends DataPacket{
 		$this->putVarInt($this->eduEditionOffer);
 		$this->putBool($this->hasEduFeaturesEnabled);
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putString($this->educationProductId);
+			$this->putString($this->eduProductUUID);
 		}
 		$this->putLFloat($this->rainLevel);
 		$this->putLFloat($this->lightningLevel);
@@ -316,14 +311,17 @@ class StartGamePacket extends DataPacket{
 		$this->putBool($this->isFromWorldTemplate);
 		$this->putBool($this->isWorldTemplateOptionLocked);
 		$this->putBool($this->onlySpawnV1Villagers);
-
 		$this->putString($this->vanillaVersion);
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putLInt($this->worldWidth);
-			$this->putLInt($this->worldDepth);
-			$this->putBool($this->netherType);
-			$this->putBool($this->experimentalGameplay);
+			$this->putLInt($this->limitedWorldWidth);
+			$this->putLInt($this->limitedWorldLength);
+			$this->putBool($this->isNewNether);
+			$this->putBool($this->experimentalGameplayOverride !== null);
+			if($this->experimentalGameplayOverride !== null){
+				$this->putBool($this->experimentalGameplayOverride);
+			}
 		}
+
 		$this->putString($this->levelId);
 		$this->putString($this->worldName);
 		$this->putString($this->premiumWorldTemplateId);
@@ -353,7 +351,7 @@ class StartGamePacket extends DataPacket{
 
 		$this->putString($this->multiplayerCorrelationId);
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putBool($this->itemNetStackManager);
+			$this->putBool($this->enableNewInventorySystem);
 		}
 	}
 

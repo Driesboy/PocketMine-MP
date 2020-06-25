@@ -99,7 +99,7 @@ class CraftingDataPacket extends DataPacket{
 					$entry["block"] = $this->getString();
 					$entry["priority"] = $this->getVarInt();
 					if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-						$entry["network_id"] = $this->getUnsignedVarInt();
+						$entry["net_id"] = $this->readGenericTypeNetworkId();
 					}
 
 					break;
@@ -123,7 +123,7 @@ class CraftingDataPacket extends DataPacket{
 					$entry["block"] = $this->getString();
 					$entry["priority"] = $this->getVarInt();
 					if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-						$entry["network_id"] = $this->getUnsignedVarInt();
+						$entry["net_id"] = $this->readGenericTypeNetworkId();
 					}
 
 					break;
@@ -148,7 +148,7 @@ class CraftingDataPacket extends DataPacket{
 				case self::ENTRY_MULTI:
 					$entry["uuid"] = $this->getUUID()->toString();
 					if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-						$entry["network_id"] = $this->getUnsignedVarInt();
+						$entry["net_id"] = $this->readGenericTypeNetworkId();
 					}
 					break;
 				default:
@@ -158,21 +158,21 @@ class CraftingDataPacket extends DataPacket{
 		}
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				$inputPotionId = $this->getVarInt();
+				$input = $this->getVarInt();
 			} else {
-				$inputPotionId = 0;
+				$input = 0;
 			}
-			$inputPotionType = $this->getVarInt();
-			$ingredientItemId = $this->getVarInt();
+			$inputMeta = $this->getVarInt();
+			$ingredient = $this->getVarInt();
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				$ingredientType = $this->getVarInt();
-				$outputId = $this->getVarInt();
+				$ingredientMeta = $this->getVarInt();
+				$output = $this->getVarInt();
 			} else {
-				$ingredientType = 0;
-				$outputId = 0;
+				$ingredientMeta = 0;
+				$output = 0;
 			}
-			$outputPotionType = $this->getVarInt();
-			$this->potionTypeRecipes[] = new PotionTypeRecipe($inputPotionId, $inputPotionType, $ingredientItemId, $ingredientType, $outputId, $outputPotionType);
+			$outputMeta = $this->getVarInt();
+			$this->potionTypeRecipes[] = new PotionTypeRecipe($input, $inputMeta, $ingredient, $ingredientMeta, $output, $outputMeta);
 		}
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			$input = $this->getVarInt();
@@ -216,7 +216,7 @@ class CraftingDataPacket extends DataPacket{
 		$stream->putString("crafting_table"); //TODO: blocktype (no prefix) (this might require internal API breaks)
 		$stream->putVarInt(50); //TODO: priority
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$stream->putVarInt($recipe->getNetworkId());
+			$stream->writeGenericTypeNetworkId($pos); //TODO: ANOTHER recipe ID, only used on the network
 		}
 
 		return CraftingDataPacket::ENTRY_SHAPELESS;
@@ -243,7 +243,7 @@ class CraftingDataPacket extends DataPacket{
 		$stream->putString("crafting_table"); //TODO: blocktype (no prefix) (this might require internal API breaks)
 		$stream->putVarInt(50); //TODO: priority
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$stream->putVarInt($recipe->getNetworkId());
+			$stream->writeGenericTypeNetworkId($pos); //TODO: ANOTHER recipe ID, only used on the network
 		}
 
 		return CraftingDataPacket::ENTRY_SHAPED;
@@ -301,15 +301,15 @@ class CraftingDataPacket extends DataPacket{
 		$this->putUnsignedVarInt(count($this->potionTypeRecipes));
 		foreach($this->potionTypeRecipes as $recipe){
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				$this->putVarInt($recipe->getInputPotionId());
+				$this->putVarInt($recipe->getInputItemId());
 			}
-			$this->putVarInt($recipe->getInputPotionType());
+			$this->putVarInt($recipe->getInputItemMeta());
 			$this->putVarInt($recipe->getIngredientItemId());
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				$this->putVarInt($recipe->getIngredientItemType());
-				$this->putVarInt($recipe->getOutputPotionId());
+				$this->putVarInt($recipe->getIngredientItemMeta());
+				$this->putVarInt($recipe->getOutputItemId());
 			}
-			$this->putVarInt($recipe->getOutputPotionType());
+			$this->putVarInt($recipe->getOutputItemMeta());
 		}
 		$this->putUnsignedVarInt(count($this->potionContainerRecipes));
 		foreach($this->potionContainerRecipes as $recipe){

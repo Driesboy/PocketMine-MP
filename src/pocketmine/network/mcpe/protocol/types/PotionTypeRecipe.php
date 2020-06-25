@@ -25,48 +25,48 @@ namespace pocketmine\network\mcpe\protocol\types;
 
 class PotionTypeRecipe{
 	/** @var int */
-	private $inputPotionId;
+	private $inputItemId;
 	/** @var int */
-	private $inputPotionType;
+	private $inputItemMeta;
 	/** @var int */
 	private $ingredientItemId;
 	/** @var int */
-	private $ingredientItemType;
+	private $ingredientItemMeta;
 	/** @var int */
-	private $outputPotionId;
+	private $outputItemId;
 	/** @var int */
-	private $outputPotionType;
+	private $outputItemMeta;
 
-	public function __construct(int $inputPotionId, int $inputPotionType, int $ingredientItemId, int $ingredientItemType, int $outputPotionId, int $outputPotionType){
-		$this->inputPotionId = $inputPotionId;
-		$this->inputPotionType = $inputPotionType;
+	public function __construct(int $inputItemId, int $inputItemMeta, int $ingredientItemId, int $ingredientItemMeta, int $outputItemId, int $outputItemMeta){
+		$this->inputItemId = $inputItemId;
+		$this->inputItemMeta = $inputItemMeta;
 		$this->ingredientItemId = $ingredientItemId;
-		$this->ingredientItemType = $ingredientItemType;
-		$this->outputPotionId = $outputPotionId;
-		$this->outputPotionType = $outputPotionType;
+		$this->ingredientItemMeta = $ingredientItemMeta;
+		$this->outputItemId = $outputItemId;
+		$this->outputItemMeta = $outputItemMeta;
 	}
 
-	public function getInputPotionId() : int{
-		return $this->inputPotionId;
+	public function getInputItemId() : int{
+		return $this->inputItemId;
 	}
 
-	public function getInputPotionType() : int{
-		return $this->inputPotionType;
+	public function getInputItemMeta() : int{
+		return $this->inputItemMeta;
 	}
 
 	public function getIngredientItemId() : int{
 		return $this->ingredientItemId;
 	}
 
-	public function getIngredientItemType() : int{
-		return $this->ingredientItemType;
+	public function getIngredientItemMeta() : int{
+		return $this->ingredientItemMeta;
 	}
 
-	public function getOutputPotionId() : int{
-		return $this->outputPotionId;
+	public function getOutputItemId() : int{
+		return $this->outputItemId;
 	}
 
-	public function getOutputPotionType() : int{
-		return $this->outputPotionType;
+	public function getOutputItemMeta() : int{
+		return $this->outputItemMeta;
 	}
 }

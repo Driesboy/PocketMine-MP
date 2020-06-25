@@ -25,31 +25,43 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\item\Item;
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\types\CreativeContentEntry;
 use function count;
 
-class CreativeContentPacket extends DataPacket{
+class CreativeContentPacket extends DataPacket/* implements ClientboundPacket*/{
 	public const NETWORK_ID = ProtocolInfo::CREATIVE_CONTENT_PACKET;
 
-	/** @var Item[] */
-	public $items = [];
+	/** @var CreativeContentEntry[] */
+	private $entries;
 
-	protected function decodePayload(int $protocolId): void{
-		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$this->items[$this->getUnsignedVarInt()] = $this->getSlot();
+	/**
+	 * @param CreativeContentEntry[] $entries
+	 */
+	public static function create(array $entries) : self{
+		$result = new self;
+		$result->entries = $entries;
+		return $result;
+	}
+
+	/** @return CreativeContentEntry[] */
+	public function getEntries() : array{ return $this->entries; }
+
+	protected function decodePayload(int $protocolId) : void{
+		$this->entries = [];
+		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
+			$this->entries[] = CreativeContentEntry::read($this);
 		}
 	}
 
-	protected function encodePayload(int $protocolId): void{
-		$this->putUnsignedVarInt(count($this->items));
-		foreach($this->items as $networkId => $item){
-			$this->putUnsignedVarInt($networkId);
-			$this->putSlot($item);
+	protected function encodePayload(int $protocolId) : void{
+		$this->putUnsignedVarInt(count($this->entries));
+		foreach($this->entries as $entry){
+			$entry->write($this);
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleCreativeContent($this);
+	public function handle(NetworkSession $handler) : bool{
+		return $handler->handleCreativeContent($this);
 	}
 }

@@ -38,13 +38,13 @@ class EntityLink{
 	/** @var bool */
 	public $immediate; //for dismounting on mount death
 	/** @var bool */
-	public $changedByRider;
+	public $causedByRider;
 
-	public function __construct(int $fromEntityUniqueId = null, int $toEntityUniqueId = null, int $type = null, bool $immediate = false, bool $changedByRider = false){
+	public function __construct(int $fromEntityUniqueId, int $toEntityUniqueId, int $type, bool $immediate, bool $causedByRider){
 		$this->fromEntityUniqueId = $fromEntityUniqueId;
 		$this->toEntityUniqueId = $toEntityUniqueId;
 		$this->type = $type;
 		$this->immediate = $immediate;
-		$this->changedByRider = $changedByRider;
+		$this->causedByRider = $causedByRider;
 	}
 }
