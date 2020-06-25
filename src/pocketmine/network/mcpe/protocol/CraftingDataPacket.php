@@ -67,7 +67,6 @@ class CraftingDataPacket extends DataPacket{
 	public function clean(){
 		$this->entries = [];
 		$this->decodedEntries = [];
-
 		return parent::clean();
 	}
 

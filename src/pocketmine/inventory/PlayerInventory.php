@@ -194,28 +194,6 @@ class PlayerInventory extends BaseInventory{
 		return 9;
 	}
 
-	public function open(Player $who) : bool {
-		if(($parent = parent::open($who)) && $who->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$pk = new ContainerOpenPacket();
-			$pk->windowId = ContainerIds::INVENTORY;
-			$pk->type = -1;
-			$pk->x = $pk->y = $pk->z = 0;
-			$pk->entityUniqueId = -1;
-
-			$who->dataPacket($pk);
-		}
-
-		return $parent;
-	}
-
-	public function close(Player $who) : void{
-		if($who->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$pk = new ContainerClosePacket();
-			$pk->windowId = ContainerIds::INVENTORY;
-			$who->dataPacket($pk);
-		}
-	}
-
 	/**
 	 * @return void
 	 */

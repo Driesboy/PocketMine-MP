@@ -343,8 +343,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $spawnChunkLoadCount = 0;
 	/** @var int */
 	protected $chunksPerTick;
-	/** @var bool */
-	public $inventoryOpen = false;
 
 	/** @var bool[] map: raw UUID (string) => bool */
 	protected $hiddenPlayers = [];
@@ -3031,7 +3029,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	}
 
 	public function handleContainerClose(ContainerClosePacket $packet) : bool{
-		if(!$this->spawned){
+		if(!$this->spawned || ($this->getProtocolId() < ProtocolInfo::PROTOCOL_1_16_0 && $packet->windowId === 0)){
 			return true;
 		}
 
@@ -3047,6 +3045,10 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			(new InventoryCloseEvent($this->windowIndex[$packet->windowId], $this))->call();
 			$this->removeWindow($this->windowIndex[$packet->windowId]);
 			//removeWindow handles sending the appropriate
+			return true;
+		}
+		if($packet->windowId === 255 && $this->getProtocolId() < ProtocolInfo::PROTOCOL_1_16_0){
+			//Closed a fake window
 			return true;
 		}
 

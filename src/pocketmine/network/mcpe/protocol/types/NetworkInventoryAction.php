@@ -30,7 +30,6 @@ use pocketmine\inventory\transaction\action\InventoryAction;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\Player;
 
 class NetworkInventoryAction{
@@ -121,8 +120,6 @@ class NetworkInventoryAction{
 	}
 
 	/**
-	 * @param InventoryTransactionPacket $packet
-	 *
 	 * @return void
 	 */
 	public function write(InventoryTransactionPacket $packet, bool $hasItemStackIds){
@@ -225,7 +222,6 @@ class NetworkInventoryAction{
 
 				//TODO: more stuff
 				throw new \UnexpectedValueException("Player " . $player->getName() . " has no open container with window ID $this->windowId");
-				break;
 			default:
 				throw new \UnexpectedValueException("Unknown inventory source type $this->sourceType");
 		}

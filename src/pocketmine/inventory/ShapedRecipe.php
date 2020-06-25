@@ -25,6 +25,7 @@ namespace pocketmine\inventory;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use function array_map;
 use function array_values;
 use function count;
@@ -45,9 +46,6 @@ class ShapedRecipe implements CraftingRecipe{
 	/** @var int */
 	private $width;
 
-	/** @var int */
-	private $networkId;
-
 	/**
 	 * Constructs a ShapedRecipe instance.
 	 *
@@ -64,7 +62,7 @@ class ShapedRecipe implements CraftingRecipe{
 	 * Note: Recipes **do not** need to be square. Do NOT add padding for empty rows/columns.
 	 * @param int|null $networkId
 	 */
-	public function __construct(array $shape, array $ingredients, array $results, ?int $networkId = null){
+	public function __construct(array $shape, array $ingredients, array $results){
 		$this->height = count($shape);
 		if($this->height > 3 or $this->height <= 0){
 			throw new \InvalidArgumentException("Shaped recipes may only have 1, 2 or 3 rows, not $this->height");
@@ -96,7 +94,6 @@ class ShapedRecipe implements CraftingRecipe{
 		}
 
 		$this->results = array_map(function(Item $item) : Item{ return clone $item; }, $results);
-		$this->networkId = $networkId ?? ++CraftingManager::$nextNetworkId;
 	}
 
 	public function getWidth() : int{
@@ -119,10 +116,6 @@ class ShapedRecipe implements CraftingRecipe{
 	 */
 	public function getResultsFor(CraftingGrid $grid) : array{
 		return $this->getResults();
-	}
-
-	public function getNetworkId() : int{
-		return $this->networkId;
 	}
 
 	/**
@@ -189,7 +182,7 @@ class ShapedRecipe implements CraftingRecipe{
 	 * @deprecated
 	 */
 	public function registerToCraftingManager(CraftingManager $manager) : void{
-		$manager->registerShapedRecipe($this);
+		$manager->registerShapedRecipe(ProtocolInfo::PROTOCOL_1_16_0, $this);
 	}
 
 	private function matchInputMap(CraftingGrid $grid, bool $reverse) : bool{

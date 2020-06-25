@@ -65,7 +65,7 @@ class PlayerListPacket extends DataPacket{
 			$this->entries[$i] = $entry;
 		}
 
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_14_60 && $this->type === self::TYPE_ADD){
+		if($this->type === self::TYPE_ADD){
 			for($i = 0; $i < $count; ++$i){
 				$this->entries[$i]->skinData->setVerified($protocolId >= ProtocolInfo::PROTOCOL_1_14_60 ? $this->getBool() : true);
 			}

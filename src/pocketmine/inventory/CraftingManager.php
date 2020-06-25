@@ -47,8 +47,6 @@ class CraftingManager{
 	/** @var BatchPacket[] */
 	private $craftingDataCache = [];
 
-	public static $nextNetworkId = 0;
-
 	public function __construct(){
 		$this->init();
 	}
@@ -135,7 +133,7 @@ class CraftingManager{
 	 * Returns a pre-compressed CraftingDataPacket for sending to players. Rebuilds the cache if it is not found.
 	 */
 	public function getCraftingDataPacket(int $protocolId) : BatchPacket{
-		if(empty($this->craftingDataCache)){
+		if(empty($this->craftingDataCache[$protocolId])){
 			$this->buildCraftingDataCache($protocolId);
 		}
 

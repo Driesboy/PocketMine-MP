@@ -50,6 +50,7 @@ class InventoryTransactionPacket extends DataPacket{
 	public const USE_ITEM_ON_ENTITY_ACTION_INTERACT = 0;
 	public const USE_ITEM_ON_ENTITY_ACTION_ATTACK = 1;
 
+	/** @var int */
 	public $requestId;
 	/** @var InventoryTransactionChangedSlotsHack[] */
 	public $requestChangedSlots;
@@ -168,6 +169,7 @@ class InventoryTransactionPacket extends DataPacket{
 				}
 			}
 		}
+
 		$this->putUnsignedVarInt($this->transactionType);
 
 		$this->putUnsignedVarInt(count($this->actions));

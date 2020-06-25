@@ -38,16 +38,14 @@ class ShapelessRecipe implements CraftingRecipe{
 	/**
 	 * @param Item[]   $ingredients No more than 9 total. This applies to sum of item stack counts, not count of array.
 	 * @param Item[]   $results List of result items created by this recipe.
-	 * @param int|null $networkId
 	 */
-	public function __construct(array $ingredients, array $results, ?int $networkId = null){
+	public function __construct(array $ingredients, array $results){
 		foreach($ingredients as $item){
 			//Ensure they get split up properly
 			$this->addIngredient($item);
 		}
 
 		$this->results = array_map(function(Item $item) : Item{ return clone $item; }, $results);
-		$this->networkId = $networkId ?? ++CraftingManager::$nextNetworkId;
 	}
 
 	/**
@@ -59,10 +57,6 @@ class ShapelessRecipe implements CraftingRecipe{
 
 	public function getResultsFor(CraftingGrid $grid) : array{
 		return $this->getResults();
-	}
-
-	public function getNetworkId() : int{
-		return $this->networkId;
 	}
 
 	/**
