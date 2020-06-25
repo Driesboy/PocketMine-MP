@@ -127,7 +127,7 @@ class PlayerAuthInputPacket extends DataPacket/* implements ServerboundPacket*/{
 		return $this->vrGazeDirection;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->yaw = $this->getLFloat();
 		$this->pitch = $this->getLFloat();
 		$this->position = $this->getVector3();
@@ -142,7 +142,7 @@ class PlayerAuthInputPacket extends DataPacket/* implements ServerboundPacket*/{
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putLFloat($this->yaw);
 		$this->putLFloat($this->pitch);
 		$this->putVector3($this->position);

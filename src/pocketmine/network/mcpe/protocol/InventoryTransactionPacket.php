@@ -50,7 +50,15 @@ class InventoryTransactionPacket extends DataPacket{
 	public const USE_ITEM_ON_ENTITY_ACTION_ATTACK = 1;
 
 	/** @var int */
+	public $legacyRequestId;
+	///** @var LegacySetItemSlot[] */
+	public $legacySetItemSlots = [];
+
+	/** @var int */
 	public $transactionType;
+
+	/** @var bool */
+	public $hasNetworkIds = false;
 
 	/**
 	 * @var bool
@@ -71,29 +79,53 @@ class InventoryTransactionPacket extends DataPacket{
 	/** @var \stdClass */
 	public $trData;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->legacyRequestId = $this->getVarInt();
+
+			if($this->legacyRequestId  !== 0){
+				for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
+					$containerId = $this->getByte();
+
+					$slots = [];
+					for($j = 0, $slotCount = $this->getUnsignedVarInt(); $j < $slotCount; ++$j){
+						$slots[] = $this->getByte();
+					}
+
+					//$this->legacySetItemSlots[] = new LegacySetItemSlot($containerId, $slots);
+				}
+			}
+		}
+
 		$this->transactionType = $this->getUnsignedVarInt();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->hasNetworkIds = $this->getBool();
+		}else{
+			$this->hasNetworkIds = false;
+		}
 
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			$this->actions[] = $action = (new NetworkInventoryAction())->read($this);
 
-			if(
-				$action->sourceType === NetworkInventoryAction::SOURCE_CONTAINER and
-				$action->windowId === ContainerIds::UI and
-				$action->inventorySlot === 50 and
-				!$action->oldItem->equalsExact($action->newItem)
-			){
-				$this->isCraftingPart = true;
-				if(!$action->oldItem->isNull() and $action->newItem->isNull()){
-					$this->isFinalCraftingPart = true;
+			if($protocolId < ProtocolInfo::PROTOCOL_1_16_0){
+				if(
+					$action->sourceType === NetworkInventoryAction::SOURCE_CONTAINER and
+					$action->windowId === ContainerIds::UI and
+					$action->inventorySlot === 50 and
+					!$action->oldItem->equalsExact($action->newItem)
+				){
+					$this->isCraftingPart = true;
+					if(!$action->oldItem->isNull() and $action->newItem->isNull()){
+						$this->isFinalCraftingPart = true;
+					}
+				}elseif(
+					$action->sourceType === NetworkInventoryAction::SOURCE_TODO and (
+						$action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
+						$action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
+					)
+				){
+					$this->isCraftingPart = true;
 				}
-			}elseif(
-				$action->sourceType === NetworkInventoryAction::SOURCE_TODO and (
-					$action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
-					$action->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
-				)
-			){
-				$this->isCraftingPart = true;
 			}
 		}
 
@@ -133,8 +165,26 @@ class InventoryTransactionPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putVarInt($this->legacyRequestId);
+			if($this->legacyRequestId > 0){
+				$this->putUnsignedVarInt(count($this->legacySetItemSlots));
+				foreach($this->legacySetItemSlots as $setItemSlot){
+					$this->putByte($setItemSlot->containerId);
+
+					$this->putUnsignedVarInt(count($setItemSlot->slots));
+					foreach($setItemSlot->slots as $slot){
+						$this->putByte($slot);
+					}
+				}
+			}
+		}
 		$this->putUnsignedVarInt($this->transactionType);
+
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putBool($this->hasNetworkIds);
+		}
 
 		$this->putUnsignedVarInt(count($this->actions));
 		foreach($this->actions as $action){
@@ -172,6 +222,10 @@ class InventoryTransactionPacket extends DataPacket{
 			default:
 				throw new \InvalidArgumentException("Unknown transaction type $this->transactionType");
 		}
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

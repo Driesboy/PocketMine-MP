@@ -36,12 +36,12 @@ class SetActorMotionPacket extends DataPacket{
 	/** @var Vector3 */
 	public $motion;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->motion = $this->getVector3();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putVector3($this->motion);
 	}

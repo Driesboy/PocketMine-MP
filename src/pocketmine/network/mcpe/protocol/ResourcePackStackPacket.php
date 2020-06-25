@@ -45,7 +45,7 @@ class ResourcePackStackPacket extends DataPacket{
 	/** @var string */
 	public $baseGameVersion = ProtocolInfo::MINECRAFT_VERSION_NETWORK;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->mustAccept = $this->getBool();
 		$behaviorPackCount = $this->getUnsignedVarInt();
 		while($behaviorPackCount-- > 0){
@@ -65,7 +65,7 @@ class ResourcePackStackPacket extends DataPacket{
 		$this->baseGameVersion = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putBool($this->mustAccept);
 
 		$this->putUnsignedVarInt(count($this->behaviorPackStack));

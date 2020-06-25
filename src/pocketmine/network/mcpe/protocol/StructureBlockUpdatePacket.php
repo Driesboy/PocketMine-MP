@@ -42,13 +42,13 @@ class StructureBlockUpdatePacket extends DataPacket/* implements ServerboundPack
 	/** @var bool */
 	public $isPowered;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->getBlockPosition($this->x, $this->y, $this->z);
 		$this->structureEditorData = $this->getStructureEditorData();
 		$this->isPowered = $this->getBool();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putBlockPosition($this->x, $this->y, $this->z);
 		$this->putStructureEditorData($this->structureEditorData);
 		$this->putBool($this->isPowered);

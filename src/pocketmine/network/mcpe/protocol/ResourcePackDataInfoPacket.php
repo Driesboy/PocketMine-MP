@@ -46,7 +46,7 @@ class ResourcePackDataInfoPacket extends DataPacket{
 	/** @var int */
 	public $packType = ResourcePackType::RESOURCES; //TODO: check the values for this
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->packId = $this->getString();
 		$this->maxChunkSize = $this->getLInt();
 		$this->chunkCount = $this->getLInt();
@@ -56,7 +56,7 @@ class ResourcePackDataInfoPacket extends DataPacket{
 		$this->packType = $this->getByte();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->packId);
 		$this->putLInt($this->maxChunkSize);
 		$this->putLInt($this->chunkCount);

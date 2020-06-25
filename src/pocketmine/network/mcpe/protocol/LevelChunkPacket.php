@@ -100,7 +100,7 @@ class LevelChunkPacket extends DataPacket/* implements ClientboundPacket*/{
 		return $this->extraPayload;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->chunkX = $this->getVarInt();
 		$this->chunkZ = $this->getVarInt();
 		$this->subChunkCount = $this->getUnsignedVarInt();
@@ -113,7 +113,7 @@ class LevelChunkPacket extends DataPacket/* implements ClientboundPacket*/{
 		$this->extraPayload = $this->getString();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putVarInt($this->chunkX);
 		$this->putVarInt($this->chunkZ);
 		$this->putUnsignedVarInt($this->subChunkCount);

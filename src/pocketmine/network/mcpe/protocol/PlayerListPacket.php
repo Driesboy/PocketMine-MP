@@ -45,36 +45,34 @@ class PlayerListPacket extends DataPacket{
 		return parent::clean();
 	}
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->type = $this->getByte();
 		$count = $this->getUnsignedVarInt();
 		for($i = 0; $i < $count; ++$i){
 			$entry = new PlayerListEntry();
-
+			$entry->uuid = $this->getUUID();
 			if($this->type === self::TYPE_ADD){
-				$entry->uuid = $this->getUUID();
 				$entry->entityUniqueId = $this->getEntityUniqueId();
 				$entry->username = $this->getString();
 				$entry->xboxUserId = $this->getString();
 				$entry->platformChatId = $this->getString();
 				$entry->buildPlatform = $this->getLInt();
-				$entry->skinData = $this->getSkin();
+				$entry->skinData = $this->getSkin($protocolId);
 				$entry->isTeacher = $this->getBool();
 				$entry->isHost = $this->getBool();
-			}else{
-				$entry->uuid = $this->getUUID();
 			}
 
 			$this->entries[$i] = $entry;
 		}
-		if($this->type === self::TYPE_ADD){
+
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_14_60 && $this->type === self::TYPE_ADD){
 			for($i = 0; $i < $count; ++$i){
-				$this->entries[$i]->skinData->setVerified($this->getBool());
+				$this->entries[$i]->skinData->setVerified($protocolId >= ProtocolInfo::PROTOCOL_1_14_60 ? $this->getBool() : true);
 			}
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putByte($this->type);
 		$this->putUnsignedVarInt(count($this->entries));
 		foreach($this->entries as $entry){
@@ -85,18 +83,22 @@ class PlayerListPacket extends DataPacket{
 				$this->putString($entry->xboxUserId);
 				$this->putString($entry->platformChatId);
 				$this->putLInt($entry->buildPlatform);
-				$this->putSkin($entry->skinData);
+				$this->putSkin($entry->skinData, $protocolId);
 				$this->putBool($entry->isTeacher);
 				$this->putBool($entry->isHost);
 			}else{
 				$this->putUUID($entry->uuid);
 			}
 		}
-		if($this->type === self::TYPE_ADD){
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_14_60 && $this->type === self::TYPE_ADD){
 			foreach($this->entries as $entry){
-				$this->putBool($entry->skinData->isVerified());
+				$this->putBool(true);
 			}
 		}
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_14_60, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

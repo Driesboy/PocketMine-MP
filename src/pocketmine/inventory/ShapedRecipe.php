@@ -45,6 +45,9 @@ class ShapedRecipe implements CraftingRecipe{
 	/** @var int */
 	private $width;
 
+	/** @var int */
+	private $networkId;
+
 	/**
 	 * Constructs a ShapedRecipe instance.
 	 *
@@ -59,8 +62,9 @@ class ShapedRecipe implements CraftingRecipe{
 	 * @param Item[]   $results List of items that this recipe produces when crafted.
 	 *
 	 * Note: Recipes **do not** need to be square. Do NOT add padding for empty rows/columns.
+	 * @param int|null $networkId
 	 */
-	public function __construct(array $shape, array $ingredients, array $results){
+	public function __construct(array $shape, array $ingredients, array $results, ?int $networkId = null){
 		$this->height = count($shape);
 		if($this->height > 3 or $this->height <= 0){
 			throw new \InvalidArgumentException("Shaped recipes may only have 1, 2 or 3 rows, not $this->height");
@@ -92,6 +96,7 @@ class ShapedRecipe implements CraftingRecipe{
 		}
 
 		$this->results = array_map(function(Item $item) : Item{ return clone $item; }, $results);
+		$this->networkId = $networkId ?? ++CraftingManager::$nextNetworkId;
 	}
 
 	public function getWidth() : int{
@@ -114,6 +119,10 @@ class ShapedRecipe implements CraftingRecipe{
 	 */
 	public function getResultsFor(CraftingGrid $grid) : array{
 		return $this->getResults();
+	}
+
+	public function getNetworkId() : int{
+		return $this->networkId;
 	}
 
 	/**

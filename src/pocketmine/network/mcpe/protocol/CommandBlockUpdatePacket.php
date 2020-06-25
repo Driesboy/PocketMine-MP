@@ -62,7 +62,7 @@ class CommandBlockUpdatePacket extends DataPacket{
 	/** @var bool */
 	public $executeOnFirstTick;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->isBlock = $this->getBool();
 
 		if($this->isBlock){
@@ -84,7 +84,7 @@ class CommandBlockUpdatePacket extends DataPacket{
 		$this->executeOnFirstTick = $this->getBool();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putBool($this->isBlock);
 
 		if($this->isBlock){

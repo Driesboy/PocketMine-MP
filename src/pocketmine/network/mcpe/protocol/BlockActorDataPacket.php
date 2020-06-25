@@ -39,12 +39,12 @@ class BlockActorDataPacket extends DataPacket{
 	/** @var string */
 	public $namedtag;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->getBlockPosition($this->x, $this->y, $this->z);
 		$this->namedtag = $this->getRemaining();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putBlockPosition($this->x, $this->y, $this->z);
 		$this->put($this->namedtag);
 	}

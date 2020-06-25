@@ -39,12 +39,12 @@ class NetworkChunkPublisherUpdatePacket extends DataPacket{
 	/** @var int */
 	public $radius;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->getSignedBlockPosition($this->x, $this->y, $this->z);
 		$this->radius = $this->getUnsignedVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putSignedBlockPosition($this->x, $this->y, $this->z);
 		$this->putUnsignedVarInt($this->radius);
 	}

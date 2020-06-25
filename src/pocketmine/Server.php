@@ -109,8 +109,11 @@ use pocketmine\utils\Utils;
 use pocketmine\utils\UUID;
 use function array_filter;
 use function array_key_exists;
+use function array_keys;
+use function array_merge;
 use function array_shift;
 use function array_sum;
+use function array_unique;
 use function asort;
 use function assert;
 use function base64_encode;
@@ -1701,7 +1704,6 @@ class Server{
 	 * @return void
 	 */
 	public function broadcastPacket(array $players, DataPacket $packet){
-		$packet->encode();
 		$this->batchPackets($players, [$packet], false);
 	}
 
@@ -1719,27 +1721,114 @@ class Server{
 		}
 		Timings::$playerNetworkTimer->startTiming();
 
-		$targets = array_filter($players, function(Player $player) : bool{ return $player->isConnected(); });
+		$targets = array_filter($players, static function(Player $player) : bool{
+			return $player->isConnected();
+		});
 
 		if(count($targets) > 0){
+			$encodedOnly = true;
+
 			$pk = new BatchPacket();
 
-			foreach($packets as $p){
-				$pk->addPacket($p);
+			/** ALL PROTOCOLS NEEDED */
+			$protocols = [];
+			foreach($targets as $player){
+				$protocol = $player->getProtocolId();
+
+				if(isset($protocols[$protocol])){
+					$protocols[$protocol][] = $player;
+				}else{
+					$protocols[$protocol] = [$player];
+				}
+			}
+			$protocolIds = array_keys($protocols);
+
+			$encodedPackets = [];
+			foreach($packets as $index => $p){
+				if(!$p->isEncoded && $p->isProtocolDependent()){
+					/** ENCODING PER PROTOCOL */
+					$encodingProtocols = [];
+					$encodedPacket = [];
+
+					foreach($protocolIds as $protocol){
+						$encodingProtocols[$protocol] = $p->getEncodingProtocol($protocol);
+					}
+
+					foreach(array_unique($encodingProtocols) as $packetProtocol){
+						$packet = clone $p;
+
+						$packet->encode($packetProtocol);
+
+						$encodedPacket[$packetProtocol] = $packet;
+					}
+
+					foreach($encodingProtocols as $protocol => $encodingProtocol){
+						if(isset($encodedPackets[$protocol])){
+							$encodedPackets[$protocol][] = $encodedPacket[$encodingProtocol];
+						}else{
+							$encodedPackets[$protocol] = [$encodedPacket[$encodingProtocol]];
+						}
+					}
+
+					$encodedOnly = false;
+				}else{
+					$pk->addPacket($p, ProtocolInfo::CURRENT_PROTOCOL);
+				}
 			}
 
-			if(Network::$BATCH_THRESHOLD >= 0 and strlen($pk->payload) >= Network::$BATCH_THRESHOLD){
-				$pk->setCompressionLevel($this->networkCompressionLevel);
-			}else{
-				$pk->setCompressionLevel(0); //Do not compress packets under the threshold
-				$forceSync = true;
-			}
+			if($encodedOnly){
+				$protocolBatching = [];
+				$players = [];
 
-			if(!$forceSync and !$immediate and $this->networkCompressionAsync){
-				$task = new CompressBatchedTask($pk, $targets);
-				$this->asyncPool->submitTask($task);
+				foreach($protocolIds as $protocol){
+					$protocolBatching[$protocol] = $encodingProtocol = $pk->getEncodingProtocol($protocol);
+
+					if(isset($players[$encodingProtocol])){
+						$players[$encodingProtocol] = array_merge($players[$encodingProtocol], $protocols[$protocol]);
+					}else{
+						$players[$encodingProtocol] = $protocols[$protocol];
+					}
+				}
+
+				foreach(array_unique($protocolBatching) as $packetProtocol){
+					$packet = clone $pk;
+
+					if(Network::$BATCH_THRESHOLD >= 0 and strlen($packet->payload) >= Network::$BATCH_THRESHOLD){
+						$packet->setCompressionLevel($this->networkCompressionLevel);
+					}else{
+						$packet->setCompressionLevel(0); //Do not compress packets under the threshold
+						$forceSync = true;
+					}
+
+					if(!$forceSync and !$immediate and $this->networkCompressionAsync){
+						$task = new CompressBatchedTask($packet, $packetProtocol, $players[$packetProtocol]);
+						$this->asyncPool->submitTask($task);
+					}else{
+						$this->broadcastPacketsCallback($packet, $packetProtocol, $players[$packetProtocol]);
+					}
+				}
 			}else{
-				$this->broadcastPacketsCallback($pk, $targets, $immediate);
+				foreach($encodedPackets as $protocolId => $pks){
+					$packet = clone $pk;
+
+					foreach($pks as $p){
+						$packet->addPacket($p, $protocolId);
+					}
+
+					if(Network::$BATCH_THRESHOLD >= 0 and strlen($packet->payload) >= Network::$BATCH_THRESHOLD){
+						$packet->setCompressionLevel($this->networkCompressionLevel);
+					}else{
+						$packet->setCompressionLevel(0); //Do not compress packets under the threshold
+						$forceSync = true;
+					}
+
+					if(!$forceSync and !$immediate and $this->networkCompressionAsync){
+						$task = new CompressBatchedTask($packet, $protocolId, $protocols[$protocolId]);
+						$this->asyncPool->submitTask($task);
+					}else{
+						$this->broadcastPacketsCallback($packet, $protocolId, $protocols[$protocolId], $immediate);
+					}
+				}
 			}
 		}
 
@@ -1747,13 +1836,13 @@ class Server{
 	}
 
 	/**
-	 * @param Player[]    $players
+	 * @param Player[] $players
 	 *
 	 * @return void
 	 */
-	public function broadcastPacketsCallback(BatchPacket $pk, array $players, bool $immediate = false){
+	public function broadcastPacketsCallback(BatchPacket $pk, int $protocolId, array $players, bool $immediate = false){
 		if(!$pk->isEncoded){
-			$pk->encode();
+			$pk->encode($protocolId);
 		}
 
 		foreach($players as $i){

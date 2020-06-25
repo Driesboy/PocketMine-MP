@@ -241,7 +241,11 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		if(isset($this->identifiers[$h = spl_object_hash($player)])){
 			$identifier = $this->identifiers[$h];
 			if(!$packet->isEncoded){
-				$packet->encode();
+				if($packet->isProtocolDependent()){
+					$packet->encode($packet->getEncodingProtocol($player->getProtocolId()));
+				}else{
+					$packet->encode();
+				}
 			}
 
 			if($packet instanceof BatchPacket){

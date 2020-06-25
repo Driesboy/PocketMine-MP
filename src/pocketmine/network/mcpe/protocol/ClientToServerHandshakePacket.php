@@ -34,11 +34,11 @@ class ClientToServerHandshakePacket extends DataPacket{
 		return true;
 	}
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		//No payload
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		//No payload
 	}
 

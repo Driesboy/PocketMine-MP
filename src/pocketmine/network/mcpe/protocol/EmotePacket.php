@@ -62,13 +62,13 @@ class EmotePacket extends DataPacket/* implements ClientboundPacket, Serverbound
 		return $this->flags;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->emoteId = $this->getString();
 		$this->flags = $this->getByte();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putString($this->emoteId);
 		$this->putByte($this->flags);

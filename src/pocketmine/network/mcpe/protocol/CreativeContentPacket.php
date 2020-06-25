@@ -25,23 +25,31 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
+use pocketmine\item\Item;
 use pocketmine\network\mcpe\NetworkSession;
+use function count;
 
-class SetDifficultyPacket extends DataPacket{
-	public const NETWORK_ID = ProtocolInfo::SET_DIFFICULTY_PACKET;
+class CreativeContentPacket extends DataPacket{
+	public const NETWORK_ID = ProtocolInfo::CREATIVE_CONTENT_PACKET;
 
-	/** @var int */
-	public $difficulty;
+	/** @var Item[] */
+	public $items = [];
 
-	protected function decodePayload(int $protocolId){
-		$this->difficulty = $this->getUnsignedVarInt();
+	protected function decodePayload(int $protocolId): void{
+		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
+			$this->items[$this->getUnsignedVarInt()] = $this->getSlot();
+		}
 	}
 
-	protected function encodePayload(int $protocolId){
-		$this->putUnsignedVarInt($this->difficulty);
+	protected function encodePayload(int $protocolId): void{
+		$this->putUnsignedVarInt(count($this->items));
+		foreach($this->items as $networkId => $item){
+			$this->putUnsignedVarInt($networkId);
+			$this->putSlot($item);
+		}
 	}
 
 	public function handle(NetworkSession $session) : bool{
-		return $session->handleSetDifficulty($this);
+		return $session->handleCreativeContent($this);
 	}
 }

@@ -57,12 +57,12 @@ class TickSyncPacket extends DataPacket/* implements ClientboundPacket, Serverbo
 		return $this->serverReceiveTime;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->clientSendTime = $this->getLLong();
 		$this->serverReceiveTime = $this->getLLong();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putLLong($this->clientSendTime);
 		$this->putLLong($this->serverReceiveTime);
 	}

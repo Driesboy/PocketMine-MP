@@ -43,11 +43,11 @@ class RemoveEntityPacket extends DataPacket/* implements ClientboundPacket*/{
 		return $this->uvarint1;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->uvarint1 = $this->getUnsignedVarInt();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putUnsignedVarInt($this->uvarint1);
 	}
 

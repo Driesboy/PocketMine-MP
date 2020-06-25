@@ -97,13 +97,13 @@ class ActorEventPacket extends DataPacket{
 	/** @var int */
 	public $data = 0;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->event = $this->getByte();
 		$this->data = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putByte($this->event);
 		$this->putVarInt($this->data);

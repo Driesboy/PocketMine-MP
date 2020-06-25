@@ -65,7 +65,7 @@ class ClientCacheBlobStatusPacket extends DataPacket/* implements ServerboundPac
 		return $this->missHashes;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$hitCount = $this->getUnsignedVarInt();
 		$missCount = $this->getUnsignedVarInt();
 		for($i = 0; $i < $hitCount; ++$i){
@@ -76,7 +76,7 @@ class ClientCacheBlobStatusPacket extends DataPacket/* implements ServerboundPac
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putUnsignedVarInt(count($this->hitHashes));
 		$this->putUnsignedVarInt(count($this->missHashes));
 		foreach($this->hitHashes as $hash){

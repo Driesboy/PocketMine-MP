@@ -44,11 +44,11 @@ class UnknownPacket extends DataPacket{
 		return "unknown packet";
 	}
 
-	public function decode(){
+	public function decode(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : void{
 		$this->payload = $this->getRemaining();
 	}
 
-	public function encode(){
+	public function encode(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : void{
 		//Do not reset the buffer, this class does not have a valid NETWORK_ID constant.
 		$this->put($this->payload);
 	}

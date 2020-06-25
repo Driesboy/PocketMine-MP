@@ -35,12 +35,12 @@ class MapCreateLockedCopyPacket extends DataPacket{
 	/** @var int */
 	public $newMapId;
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->originalMapId = $this->getEntityUniqueId();
 		$this->newMapId = $this->getEntityUniqueId();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putEntityUniqueId($this->originalMapId);
 		$this->putEntityUniqueId($this->newMapId);
 	}

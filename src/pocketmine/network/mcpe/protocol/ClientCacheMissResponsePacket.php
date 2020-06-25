@@ -54,7 +54,7 @@ class ClientCacheMissResponsePacket extends DataPacket/* implements ClientboundP
 		return $this->blobs;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			$hash = $this->getLLong();
 			$payload = $this->getString();
@@ -62,7 +62,7 @@ class ClientCacheMissResponsePacket extends DataPacket/* implements ClientboundP
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putUnsignedVarInt(count($this->blobs));
 		foreach($this->blobs as $blob){
 			$this->putLLong($blob->getHash());

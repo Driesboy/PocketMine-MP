@@ -67,6 +67,10 @@ class StartGamePacket extends DataPacket{
 	/** @var int */
 	public $seed;
 	/** @var int */
+	public $type = 0;
+	/** @var string */
+	public $biome = '';
+	/** @var int */
 	public $dimension;
 	/** @var int */
 	public $generator = GeneratorType::OVERWORLD;
@@ -88,6 +92,8 @@ class StartGamePacket extends DataPacket{
 	public $eduEditionOffer = EducationEditionOffer::NONE;
 	/** @var bool */
 	public $hasEduFeaturesEnabled = false;
+	/** @var string */
+	public $educationProductId = '';
 	/** @var float */
 	public $rainLevel;
 	/** @var float */
@@ -140,6 +146,14 @@ class StartGamePacket extends DataPacket{
 
 	/** @var string */
 	public $vanillaVersion = ProtocolInfo::MINECRAFT_VERSION_NETWORK;
+	/** @var int */
+	public $worldWidth = 16;
+	/** @var int */
+	public $worldDepth = 16;
+	/** @var bool */
+	public $netherType = false;
+	/** @var bool */
+	public $experimentalGameplay = false;
 	/** @var string */
 	public $levelId = ""; //base64 string, usually the same as world folder name in vanilla
 	/** @var string */
@@ -156,6 +170,8 @@ class StartGamePacket extends DataPacket{
 	public $enchantmentSeed = 0;
 	/** @var string */
 	public $multiplayerCorrelationId = ""; //TODO: this should be filled with a UUID of some sort
+	/** @var bool */
+	public $itemNetStackManager = false;
 
 	/** @var ListTag|null */
 	public $blockTable = null;
@@ -165,7 +181,7 @@ class StartGamePacket extends DataPacket{
 	 */
 	public $itemTable = null;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->playerGamemode = $this->getVarInt();
@@ -177,6 +193,10 @@ class StartGamePacket extends DataPacket{
 
 		//Level settings
 		$this->seed = $this->getVarInt();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->type = $this->getShort();
+			$this->biome = $this->getString();
+		}
 		$this->dimension = $this->getVarInt();
 		$this->generator = $this->getVarInt();
 		$this->worldGamemode = $this->getVarInt();
@@ -186,6 +206,9 @@ class StartGamePacket extends DataPacket{
 		$this->time = $this->getVarInt();
 		$this->eduEditionOffer = $this->getVarInt();
 		$this->hasEduFeaturesEnabled = $this->getBool();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->educationProductId = $this->getString();
+		}
 		$this->rainLevel = $this->getLFloat();
 		$this->lightningLevel = $this->getLFloat();
 		$this->hasConfirmedPlatformLockedContent = $this->getBool();
@@ -209,6 +232,12 @@ class StartGamePacket extends DataPacket{
 		$this->onlySpawnV1Villagers = $this->getBool();
 
 		$this->vanillaVersion = $this->getString();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->worldWidth = $this->getLInt();
+			$this->worldDepth = $this->getLInt();
+			$this->netherType = $this->getBool();
+			$this->experimentalGameplay = $this->getBool();
+		}
 		$this->levelId = $this->getString();
 		$this->worldName = $this->getString();
 		$this->premiumWorldTemplateId = $this->getString();
@@ -233,9 +262,12 @@ class StartGamePacket extends DataPacket{
 		}
 
 		$this->multiplayerCorrelationId = $this->getString();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->itemNetStackManager = $this->getBool();
+		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityUniqueId($this->entityUniqueId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putVarInt($this->playerGamemode);
@@ -247,6 +279,10 @@ class StartGamePacket extends DataPacket{
 
 		//Level settings
 		$this->putVarInt($this->seed);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putShort($this->type);
+			$this->putString($this->biome);
+		}
 		$this->putVarInt($this->dimension);
 		$this->putVarInt($this->generator);
 		$this->putVarInt($this->worldGamemode);
@@ -256,6 +292,9 @@ class StartGamePacket extends DataPacket{
 		$this->putVarInt($this->time);
 		$this->putVarInt($this->eduEditionOffer);
 		$this->putBool($this->hasEduFeaturesEnabled);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putString($this->educationProductId);
+		}
 		$this->putLFloat($this->rainLevel);
 		$this->putLFloat($this->lightningLevel);
 		$this->putBool($this->hasConfirmedPlatformLockedContent);
@@ -279,6 +318,12 @@ class StartGamePacket extends DataPacket{
 		$this->putBool($this->onlySpawnV1Villagers);
 
 		$this->putString($this->vanillaVersion);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putLInt($this->worldWidth);
+			$this->putLInt($this->worldDepth);
+			$this->putBool($this->netherType);
+			$this->putBool($this->experimentalGameplay);
+		}
 		$this->putString($this->levelId);
 		$this->putString($this->worldName);
 		$this->putString($this->premiumWorldTemplateId);
@@ -307,6 +352,9 @@ class StartGamePacket extends DataPacket{
 		}
 
 		$this->putString($this->multiplayerCorrelationId);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putBool($this->itemNetStackManager);
+		}
 	}
 
 	/**
@@ -321,6 +369,10 @@ class StartGamePacket extends DataPacket{
 			$stream->putLShort($legacyId);
 		}
 		return $stream->getBuffer();
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

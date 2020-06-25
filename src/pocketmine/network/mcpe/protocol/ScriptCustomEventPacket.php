@@ -35,14 +35,18 @@ class ScriptCustomEventPacket extends DataPacket{
 	/** @var string json data */
 	public $eventData;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->eventName = $this->getString();
 		$this->eventData = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->eventName);
 		$this->putString($this->eventData);
+	}
+
+	public function canBeSentBeforeLogin() : bool{
+		return true;
 	}
 
 	public function handle(NetworkSession $session) : bool{

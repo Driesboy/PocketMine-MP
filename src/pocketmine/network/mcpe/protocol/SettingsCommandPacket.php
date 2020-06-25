@@ -50,12 +50,12 @@ class SettingsCommandPacket extends DataPacket/* implements ServerboundPacket*/{
 		return $this->suppressOutput;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->command = $this->getString();
 		$this->suppressOutput = $this->getBool();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->command);
 		$this->putBool($this->suppressOutput);
 	}

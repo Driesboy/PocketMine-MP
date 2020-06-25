@@ -38,13 +38,13 @@ class CommandRequestPacket extends DataPacket{
 	/** @var bool */
 	public $isInternal;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->command = $this->getString();
 		$this->originData = $this->getCommandOriginData();
 		$this->isInternal = $this->getBool();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->command);
 		$this->putCommandOriginData($this->originData);
 		$this->putBool($this->isInternal);

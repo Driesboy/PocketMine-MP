@@ -42,7 +42,7 @@ class AddPaintingPacket extends DataPacket{
 	/** @var string */
 	public $title;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->position = $this->getVector3();
@@ -50,7 +50,7 @@ class AddPaintingPacket extends DataPacket{
 		$this->title = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putVector3($this->position);

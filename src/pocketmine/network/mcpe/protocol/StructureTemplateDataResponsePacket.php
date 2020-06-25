@@ -35,14 +35,14 @@ class StructureTemplateDataResponsePacket extends DataPacket{
 	/** @var string|null */
 	public $namedtag;
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->structureTemplateName = $this->getString();
 		if($this->getBool()){
 			$this->namedtag = $this->getRemaining();
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->structureTemplateName);
 		$this->putBool($this->namedtag !== null);
 		if($this->namedtag !== null){

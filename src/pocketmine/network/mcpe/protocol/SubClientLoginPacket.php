@@ -33,11 +33,11 @@ class SubClientLoginPacket extends DataPacket{
 	/** @var string */
 	public $connectionRequestData;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->connectionRequestData = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->connectionRequestData);
 	}
 

@@ -44,7 +44,7 @@ class VideoStreamConnectPacket extends DataPacket/* implements ClientboundPacket
 	/** @var int */
 	public $resolutionY;
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->serverUri = $this->getString();
 		$this->frameSendFrequency = $this->getLFloat();
 		$this->action = $this->getByte();
@@ -52,7 +52,7 @@ class VideoStreamConnectPacket extends DataPacket/* implements ClientboundPacket
 		$this->resolutionY = $this->getLInt();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->serverUri);
 		$this->putLFloat($this->frameSendFrequency);
 		$this->putByte($this->action);

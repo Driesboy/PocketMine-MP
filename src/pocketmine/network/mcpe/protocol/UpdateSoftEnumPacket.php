@@ -42,7 +42,7 @@ class UpdateSoftEnumPacket extends DataPacket{
 	/** @var int */
 	public $type;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->enumName = $this->getString();
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			$this->values[] = $this->getString();
@@ -50,7 +50,7 @@ class UpdateSoftEnumPacket extends DataPacket{
 		$this->type = $this->getByte();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->enumName);
 		$this->putUnsignedVarInt(count($this->values));
 		foreach($this->values as $v){

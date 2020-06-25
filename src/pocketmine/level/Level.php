@@ -77,6 +77,7 @@ use pocketmine\network\mcpe\protocol\BatchPacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
 use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\SetDifficultyPacket;
 use pocketmine\network\mcpe\protocol\SetTimePacket;
 use pocketmine\network\mcpe\protocol\types\RuntimeBlockMapping;
@@ -2480,7 +2481,7 @@ class Level implements ChunkManager, Metadatable{
 			foreach($this->chunkSendQueue[$index] as $player){
 				/** @var Player $player */
 				if($player->isConnected() and isset($player->usedChunks[$index])){
-					$player->sendChunk($x, $z, $this->chunkCache[$index]);
+					$player->sendChunk($x, $z, $this->chunkCache[$index][$player->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0 ? ProtocolInfo::PROTOCOL_1_16_0 : ProtocolInfo::PROTOCOL_1_14_0]);
 				}
 			}
 			unset($this->chunkSendQueue[$index]);
@@ -2528,13 +2529,14 @@ class Level implements ChunkManager, Metadatable{
 	/**
 	 * @return void
 	 */
-	public function chunkRequestCallback(int $x, int $z, BatchPacket $payload){
+	public function chunkRequestCallback(int $x, int $z, BatchPacket $payload, BatchPacket $payload2){
 		$this->timings->syncChunkSendTimer->startTiming();
 
 		$index = Level::chunkHash($x, $z);
 		unset($this->chunkSendTasks[$index]);
 
-		$this->chunkCache[$index] = $payload;
+		$this->chunkCache[$index][ProtocolInfo::PROTOCOL_1_16_0] = $payload;
+		$this->chunkCache[$index][ProtocolInfo::PROTOCOL_1_14_0] = $payload2;
 		$this->sendChunkFromCache($x, $z);
 		if(!$this->server->getMemoryManager()->canUseChunkCache()){
 			unset($this->chunkCache[$index]);

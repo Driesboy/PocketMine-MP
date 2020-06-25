@@ -35,12 +35,12 @@ class TakeItemActorPacket extends DataPacket{
 	/** @var int */
 	public $eid;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->target = $this->getEntityRuntimeId();
 		$this->eid = $this->getEntityRuntimeId();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->target);
 		$this->putEntityRuntimeId($this->eid);
 	}

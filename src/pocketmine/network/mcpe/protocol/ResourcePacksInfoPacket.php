@@ -41,7 +41,7 @@ class ResourcePacksInfoPacket extends DataPacket{
 	/** @var ResourcePack[] */
 	public $resourcePackEntries = [];
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->mustAccept = $this->getBool();
 		$this->hasScripts = $this->getBool();
 		$behaviorPackCount = $this->getLShort();
@@ -67,7 +67,7 @@ class ResourcePacksInfoPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putBool($this->mustAccept);
 		$this->putBool($this->hasScripts);
 		$this->putLShort(count($this->behaviorPackEntries));

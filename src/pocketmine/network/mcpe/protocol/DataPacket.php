@@ -30,7 +30,9 @@ use pocketmine\network\mcpe\NetworkBinaryStream;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\utils\Utils;
 use function bin2hex;
+use function count;
 use function get_class;
+use function in_array;
 use function is_object;
 use function is_string;
 use function method_exists;
@@ -86,10 +88,10 @@ abstract class DataPacket extends NetworkBinaryStream{
 	 * @throws \OutOfBoundsException
 	 * @throws \UnexpectedValueException
 	 */
-	public function decode(){
+	public function decode(int $protocolId){
 		$this->offset = 0;
 		$this->decodeHeader();
-		$this->decodePayload();
+		$this->decodePayload($protocolId);
 	}
 
 	/**
@@ -110,21 +112,48 @@ abstract class DataPacket extends NetworkBinaryStream{
 	/**
 	 * Note for plugin developers: If you're adding your own packets, you should perform decoding in here.
 	 *
+	 * @param int $protocolId
+	 *
 	 * @return void
-	 * @throws \OutOfBoundsException
-	 * @throws \UnexpectedValueException
 	 */
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 
 	}
 
+	public function isProtocolDependent() : bool{
+		return count($this->getProtocolVersions()) > 1;
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::CURRENT_PROTOCOL];
+	}
+
+	public function getEncodingProtocol(int $protocolId) : int{
+		$versions = $this->getProtocolVersions();
+
+		if(in_array($protocolId, $versions, true)){
+			return $protocolId;
+		}
+
+		$closestProtocolId = ProtocolInfo::CURRENT_PROTOCOL;
+		foreach($versions as $version){
+			if($version < $protocolId && (abs($protocolId - $closestProtocolId) > abs($version - $protocolId))){
+				$closestProtocolId = $version;
+			}
+		}
+
+		return $closestProtocolId;
+	}
+
 	/**
+	 * @param int $protocolId
+	 *
 	 * @return void
 	 */
-	public function encode(){
+	public function encode(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL){
 		$this->reset();
 		$this->encodeHeader();
-		$this->encodePayload();
+		$this->encodePayload($protocolId);
 		$this->isEncoded = true;
 	}
 
@@ -142,9 +171,11 @@ abstract class DataPacket extends NetworkBinaryStream{
 	/**
 	 * Note for plugin developers: If you're adding your own packets, you should perform encoding in here.
 	 *
+	 * @param int $protocolId
+	 *
 	 * @return void
 	 */
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 
 	}
 

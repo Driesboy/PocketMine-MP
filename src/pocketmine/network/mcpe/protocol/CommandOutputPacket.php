@@ -44,7 +44,7 @@ class CommandOutputPacket extends DataPacket{
 	/** @var string */
 	public $unknownString;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->originData = $this->getCommandOriginData();
 		$this->outputType = $this->getByte();
 		$this->successCount = $this->getUnsignedVarInt();
@@ -71,7 +71,7 @@ class CommandOutputPacket extends DataPacket{
 		return $message;
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putCommandOriginData($this->originData);
 		$this->putByte($this->outputType);
 		$this->putUnsignedVarInt($this->successCount);

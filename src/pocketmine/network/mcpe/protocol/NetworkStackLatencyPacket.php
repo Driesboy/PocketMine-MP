@@ -35,12 +35,12 @@ class NetworkStackLatencyPacket extends DataPacket{
 	/** @var bool */
 	public $needResponse;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->timestamp = $this->getLLong();
 		$this->needResponse = $this->getBool();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putLLong($this->timestamp);
 		$this->putBool($this->needResponse);
 	}

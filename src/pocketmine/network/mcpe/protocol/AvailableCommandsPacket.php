@@ -108,7 +108,7 @@ class AvailableCommandsPacket extends DataPacket{
 	 */
 	public $enumConstraints = [];
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		/** @var string[] $enumValues */
 		$enumValues = [];
 		for($i = 0, $enumValuesCount = $this->getUnsignedVarInt(); $i < $enumValuesCount; ++$i){
@@ -401,7 +401,7 @@ class AvailableCommandsPacket extends DataPacket{
 		return "unknown ($argtype)";
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		/** @var int[] $enumValueIndexes */
 		$enumValueIndexes = [];
 		/** @var int[] $postfixIndexes */

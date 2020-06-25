@@ -42,13 +42,13 @@ class RespawnPacket extends DataPacket{
 	/** @var int */
 	public $entityRuntimeId;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->position = $this->getVector3();
 		$this->respawnState = $this->getByte();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putVector3($this->position);
 		$this->putByte($this->respawnState);
 		$this->putEntityRuntimeId($this->entityRuntimeId);

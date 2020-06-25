@@ -47,14 +47,14 @@ class StructureTemplateDataRequestPacket extends DataPacket{
 	/** @var int */
 	public $structureTemplateResponseType;
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->structureTemplateName = $this->getString();
 		$this->getBlockPosition($this->structureBlockX, $this->structureBlockY, $this->structureBlockZ);
 		$this->structureSettings = $this->getStructureSettings();
 		$this->structureTemplateResponseType = $this->getByte();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->structureTemplateName);
 		$this->putBlockPosition($this->structureBlockX, $this->structureBlockY, $this->structureBlockZ);
 		$this->putStructureSettings($this->structureSettings);

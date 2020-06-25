@@ -26,8 +26,12 @@ namespace pocketmine\inventory;
 use pocketmine\entity\Human;
 use pocketmine\event\player\PlayerItemHeldEvent;
 use pocketmine\item\Item;
+use pocketmine\network\mcpe\protocol\ContainerClosePacket;
+use pocketmine\network\mcpe\protocol\ContainerOpenPacket;
+use pocketmine\network\mcpe\protocol\CreativeContentPacket;
 use pocketmine\network\mcpe\protocol\InventoryContentPacket;
 use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\ContainerIds;
 use pocketmine\Player;
 use function in_array;
@@ -187,6 +191,28 @@ class PlayerInventory extends BaseInventory{
 		return 9;
 	}
 
+	public function open(Player $who) : bool {
+		if(($parent = parent::open($who)) && $who->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+			$pk = new ContainerOpenPacket();
+			$pk->windowId = ContainerIds::INVENTORY;
+			$pk->type = -1;
+			$pk->x = $pk->y = $pk->z = 0;
+			$pk->entityUniqueId = -1;
+
+			$who->dataPacket($pk);
+		}
+
+		return $parent;
+	}
+
+	public function close(Player $who) : void{
+		if($who->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+			$pk = new ContainerClosePacket();
+			$pk->windowId = ContainerIds::INVENTORY;
+			$who->dataPacket($pk);
+		}
+	}
+
 	/**
 	 * @return void
 	 */
@@ -196,8 +222,13 @@ class PlayerInventory extends BaseInventory{
 		if(!($holder instanceof Player)){
 			throw new \LogicException("Cannot send creative inventory contents to non-player inventory holder");
 		}
-		$pk = new InventoryContentPacket();
-		$pk->windowId = ContainerIds::CREATIVE;
+
+		if($holder->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+			$pk = new CreativeContentPacket();
+		}else{
+			$pk = new InventoryContentPacket();
+			$pk->windowId = ContainerIds::CREATIVE;
+		}
 
 		if(!$holder->isSpectator()){ //fill it for all gamemodes except spectator
 			foreach(Item::getCreativeItems() as $i => $item){

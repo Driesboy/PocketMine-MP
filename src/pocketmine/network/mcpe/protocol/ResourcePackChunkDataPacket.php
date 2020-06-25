@@ -39,14 +39,14 @@ class ResourcePackChunkDataPacket extends DataPacket{
 	/** @var string */
 	public $data;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->packId = $this->getString();
 		$this->chunkIndex = $this->getLInt();
 		$this->progress = $this->getLLong();
 		$this->data = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->packId);
 		$this->putLInt($this->chunkIndex);
 		$this->putLLong($this->progress);

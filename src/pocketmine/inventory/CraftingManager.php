@@ -43,8 +43,10 @@ class CraftingManager{
 	/** @var FurnaceRecipe[] */
 	protected $furnaceRecipes = [];
 
-	/** @var BatchPacket|null */
-	private $craftingDataCache;
+	/** @var BatchPacket[] */
+	private $craftingDataCache = [];
+
+	public static $nextNetworkId = 0;
 
 	public function __construct(){
 		$this->init();
@@ -115,26 +117,31 @@ class CraftingManager{
 			$pk->addFurnaceRecipe($recipe);
 		}
 
-		$pk->encode();
-
 		$batch = new BatchPacket();
-		$batch->addPacket($pk);
 		$batch->setCompressionLevel(Server::getInstance()->networkCompressionLevel);
-		$batch->encode();
 
-		$this->craftingDataCache = $batch;
+		foreach($batch->getProtocolVersions() as $protocolId){
+			$packet = clone $batch;
+			$p = clone $pk;
+
+			$packet->addPacket($p, $protocolId);
+			$packet->encode($protocolId);
+
+			$this->craftingDataCache[$protocolId] = $packet;
+		}
+
 		Timings::$craftingDataCacheRebuildTimer->stopTiming();
 	}
 
 	/**
 	 * Returns a pre-compressed CraftingDataPacket for sending to players. Rebuilds the cache if it is not found.
 	 */
-	public function getCraftingDataPacket() : BatchPacket{
-		if($this->craftingDataCache === null){
+	public function getCraftingDataPacket(int $protocolId) : BatchPacket{
+		if(empty($this->craftingDataCache)){
 			$this->buildCraftingDataCache();
 		}
 
-		return $this->craftingDataCache;
+		return $this->craftingDataCache[$protocolId];
 	}
 
 	/**
@@ -211,19 +218,19 @@ class CraftingManager{
 	public function registerShapedRecipe(ShapedRecipe $recipe) : void{
 		$this->shapedRecipes[self::hashOutputs($recipe->getResults())][] = $recipe;
 
-		$this->craftingDataCache = null;
+		$this->craftingDataCache = [];
 	}
 
 	public function registerShapelessRecipe(ShapelessRecipe $recipe) : void{
 		$this->shapelessRecipes[self::hashOutputs($recipe->getResults())][] = $recipe;
 
-		$this->craftingDataCache = null;
+		$this->craftingDataCache = [];
 	}
 
 	public function registerFurnaceRecipe(FurnaceRecipe $recipe) : void{
 		$input = $recipe->getInput();
 		$this->furnaceRecipes[$input->getId() . ":" . ($input->hasAnyDamageValue() ? "?" : $input->getDamage())] = $recipe;
-		$this->craftingDataCache = null;
+		$this->craftingDataCache = [];
 	}
 
 	/**

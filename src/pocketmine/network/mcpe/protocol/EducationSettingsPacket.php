@@ -50,12 +50,12 @@ class EducationSettingsPacket extends DataPacket{
 		return $this->hasQuiz;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->codeBuilderDefaultUri = $this->getString();
 		$this->hasQuiz = $this->getBool();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->codeBuilderDefaultUri);
 		$this->putBool($this->hasQuiz);
 	}

@@ -57,7 +57,7 @@ class TextPacket extends DataPacket{
 	/** @var string */
 	public $platformChatId = "";
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->type = $this->getByte();
 		$this->needsTranslation = $this->getBool();
 		switch($this->type){
@@ -88,7 +88,7 @@ class TextPacket extends DataPacket{
 		$this->platformChatId = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putByte($this->type);
 		$this->putBool($this->needsTranslation);
 		switch($this->type){

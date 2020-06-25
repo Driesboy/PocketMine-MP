@@ -330,6 +330,8 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $spawnChunkLoadCount = 0;
 	/** @var int */
 	protected $chunksPerTick;
+	/** @var bool */
+	public $inventoryOpen = false;
 
 	/** @var bool[] map: raw UUID (string) => bool */
 	protected $hiddenPlayers = [];
@@ -383,6 +385,8 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $lastRightClickTime = 0.0;
 	/** @var Vector3|null */
 	protected $lastRightClickPos = null;
+	/** @var int */
+	public $protocolId = ProtocolInfo::CURRENT_PROTOCOL;
 
 	/**
 	 * @return TranslationContainer|string
@@ -418,6 +422,10 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		}else{
 			$this->server->getNameBans()->remove($this->getName());
 		}
+	}
+
+	public function getProtocolId() : int{
+		return $this->protocolId;
 	}
 
 	public function isWhitelisted() : bool{
@@ -1232,6 +1240,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$pk->z = $this->spawnPosition->getFloorZ();
 		$pk->spawnType = SetSpawnPositionPacket::TYPE_PLAYER_SPAWN;
 		$pk->spawnForced = false;
+		$pk->dimensionType = DimensionIds::OVERWORLD;
 		$this->dataPacket($pk);
 	}
 
@@ -1864,7 +1873,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		}
 		$this->seenLoginPacket = true;
 
-		if($packet->protocol !== ProtocolInfo::CURRENT_PROTOCOL){
+		if(!in_array($packet->protocol, ProtocolInfo::ACCEPTED_PROTOCOLS, true)){
 			if($packet->protocol < ProtocolInfo::CURRENT_PROTOCOL){
 				$this->sendPlayStatus(PlayStatusPacket::LOGIN_FAILED_CLIENT, true);
 			}else{
@@ -1913,19 +1922,19 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		}
 
 		$personaPieces = [];
-		foreach($packet->clientData["PersonaPieces"] as $piece){
-			$personaPieces[] = new PersonaSkinPiece(
-				$piece["PieceId"],
-				$piece["PieceType"],
-				$piece["PackId"],
-				$piece["IsDefault"],
-				$piece["ProductId"]
-			);
+
+		if(isset($packet->clientData["PersonaPieces"])){
+			foreach($packet->clientData["PersonaPieces"] as $piece){
+				$personaPieces[] = new PersonaSkinPiece($piece["PieceId"], $piece["PieceType"], $piece["PackId"], $piece["IsDefault"], $piece["ProductId"]);
+			}
 		}
 
 		$pieceTintColors = [];
-		foreach($packet->clientData["PieceTintColors"] as $tintColor){
-			$pieceTintColors[] = new PersonaPieceTintColor($tintColor["PieceType"], $tintColor["Colors"]);
+
+		if(isset($packet->clientData["PieceTintColors"])){
+			foreach($packet->clientData["PieceTintColors"] as $tintColor){
+				$pieceTintColors[] = new PersonaPieceTintColor($tintColor["PieceType"], $tintColor["Colors"]);
+			}
 		}
 
 		$skinData = new SkinData(
@@ -1949,7 +1958,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$packet->clientData["CapeOnClassicSkin"] ?? false,
 			$packet->clientData["CapeId"] ?? "",
 			null,
-			$packet->clientData["ArmSize"] ?? SkinData::ARM_SIZE_WIDE,
+			$packet->clientData["ArmSize"] ?? "",
 			$packet->clientData["SkinColor"] ?? "",
 			$personaPieces,
 			$pieceTintColors,
@@ -2247,7 +2256,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->sendAllInventories();
 		$this->inventory->sendCreativeContents();
 		$this->inventory->sendHeldItem($this);
-		$this->dataPacket($this->server->getCraftingManager()->getCraftingDataPacket());
+		$this->dataPacket($this->server->getCraftingManager()->getCraftingDataPacket($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0 ? ProtocolInfo::PROTOCOL_1_16_0 : ProtocolInfo::PROTOCOL_1_14_0));
 
 		$this->server->addOnlinePlayer($this);
 		$this->server->sendFullPlayerListData($this);
@@ -2764,6 +2773,13 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			case InteractPacket::ACTION_LEAVE_VEHICLE:
 			case InteractPacket::ACTION_MOUSEOVER:
 				break; //TODO: handle these
+			case InteractPacket::ACTION_OPEN_INVENTORY:
+				if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0 && !$this->inventoryOpen){
+					$this->getInventory()->open($this);
+					$this->inventoryOpen = true;
+				}
+
+				return true;
 			default:
 				$this->server->getLogger()->debug("Unhandled/unknown interaction type " . $packet->action . "received from " . $this->getName());
 
@@ -2977,7 +2993,16 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	}
 
 	public function handleContainerClose(ContainerClosePacket $packet) : bool{
-		if(!$this->spawned or $packet->windowId === 0){
+		if(!$this->spawned){
+			return true;
+		}
+
+		if($packet->windowId === 0){
+			if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+				$this->getInventory()->close($this);
+				$this->inventoryOpen = false;
+			}
+
 			return true;
 		}
 

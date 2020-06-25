@@ -178,6 +178,7 @@ class PacketPool{
 		static::registerPacket(new CompletedUsingItemPacket());
 		static::registerPacket(new NetworkSettingsPacket());
 		static::registerPacket(new PlayerAuthInputPacket());
+		static::registerPacket(new CreativeContentPacket());
 	}
 
 	/**

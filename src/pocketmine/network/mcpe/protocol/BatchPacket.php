@@ -32,6 +32,7 @@ use function get_class;
 use function strlen;
 use function zlib_decode;
 use function zlib_encode;
+use const ZLIB_ENCODING_RAW;
 #ifndef COMPILE
 use pocketmine\utils\Binary;
 #endif
@@ -57,7 +58,7 @@ class BatchPacket extends DataPacket{
 		assert($pid === static::NETWORK_ID);
 	}
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$data = $this->getRemaining();
 		try{
 			$this->payload = zlib_decode($data, 1024 * 1024 * 2); //Max 2MB
@@ -70,19 +71,23 @@ class BatchPacket extends DataPacket{
 		$this->putByte(static::NETWORK_ID);
 	}
 
-	protected function encodePayload(){
-		$this->put(zlib_encode($this->payload, ZLIB_ENCODING_DEFLATE, $this->compressionLevel));
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
+	}
+
+	protected function encodePayload(int $protocolId){
+		$this->put(zlib_encode($this->payload, $protocolId >= ProtocolInfo::PROTOCOL_1_16_0 ? ZLIB_ENCODING_RAW : ZLIB_ENCODING_DEFLATE, $this->compressionLevel));
 	}
 
 	/**
 	 * @return void
 	 */
-	public function addPacket(DataPacket $packet){
+	public function addPacket(DataPacket $packet, int $protocolId){
 		if(!$packet->canBeBatched()){
 			throw new \InvalidArgumentException(get_class($packet) . " cannot be put inside a BatchPacket");
 		}
 		if(!$packet->isEncoded){
-			$packet->encode();
+			$packet->encode($protocolId);
 		}
 
 		$this->payload .= Binary::writeUnsignedVarInt(strlen($packet->buffer)) . $packet->buffer;

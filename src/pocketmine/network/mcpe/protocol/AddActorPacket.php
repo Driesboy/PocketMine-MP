@@ -170,7 +170,7 @@ class AddActorPacket extends DataPacket{
 	/** @var EntityLink[] */
 	public $links = [];
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->type = $this->getString();
@@ -201,11 +201,11 @@ class AddActorPacket extends DataPacket{
 		$this->metadata = $this->getEntityMetadata();
 		$linkCount = $this->getUnsignedVarInt();
 		for($i = 0; $i < $linkCount; ++$i){
-			$this->links[] = $this->getEntityLink();
+			$this->links[] = $this->getEntityLink($protocolId);
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putString($this->type);
@@ -226,7 +226,7 @@ class AddActorPacket extends DataPacket{
 		$this->putEntityMetadata($this->metadata);
 		$this->putUnsignedVarInt(count($this->links));
 		foreach($this->links as $link){
-			$this->putEntityLink($link);
+			$this->putEntityLink($link, $protocolId);
 		}
 	}
 

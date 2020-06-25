@@ -35,6 +35,7 @@ use pocketmine\math\Vector3;
 use pocketmine\nbt\NetworkLittleEndianNBTStream;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\CommandOriginData;
 use pocketmine\network\mcpe\protocol\types\EntityLink;
 use pocketmine\network\mcpe\protocol\types\GameRuleType;
@@ -81,7 +82,7 @@ class NetworkBinaryStream extends BinaryStream{
 		$this->putLInt($uuid->getPart(2));
 	}
 
-	public function getSkin() : SkinData{
+	public function getSkin(int $protocolId) : SkinData{
 		$skinId = $this->getString();
 		$skinResourcePatch = $this->getString();
 		$skinData = $this->getSkinImage();
@@ -102,41 +103,52 @@ class NetworkBinaryStream extends BinaryStream{
 		$capeOnClassic = $this->getBool();
 		$capeId = $this->getString();
 		$fullSkinId = $this->getString();
-		$armSize = $this->getString();
-		$skinColor = $this->getString();
-		$personaPieceCount = $this->getLInt();
-		$personaPieces = [];
-		for($i = 0; $i < $personaPieceCount; ++$i){
-			$personaPieces[] = new PersonaSkinPiece(
-				$pieceId = $this->getString(),
-				$pieceType = $this->getString(),
-				$packId = $this->getString(),
-				$isDefaultPiece = $this->getBool(),
-				$productId = $this->getString()
-			);
-		}
-		$pieceTintColorCount = $this->getLInt();
-		$pieceTintColors = [];
-		for($i = 0; $i < $pieceTintColorCount; ++$i){
-			$pieceType = $this->getString();
-			$colorCount = $this->getLInt();
-			$colors = [];
-			for($j = 0; $j < $colorCount; ++$j){
-				$colors[] = $this->getString();
+
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_14_60){
+			$armSize = $this->getString();
+			$skinColor = $this->getString();
+			$personaPieceCount = $this->getLInt();
+			$personaPieces = [];
+			for($i = 0; $i < $personaPieceCount; ++$i){
+				$personaPieces[] = new PersonaSkinPiece(
+					$pieceId = $this->getString(),
+					$pieceType = $this->getString(),
+					$packId = $this->getString(),
+					$isDefaultPiece = $this->getBool(),
+					$productId = $this->getString()
+				);
 			}
-			$pieceTintColors[] = new PersonaPieceTintColor(
-				$pieceType,
-				$colors
-			);
+			$pieceTintColorCount = $this->getLInt();
+			$pieceTintColors = [];
+			for($i = 0; $i < $pieceTintColorCount; ++$i){
+				$pieceType = $this->getString();
+				$colorCount = $this->getLInt();
+				$colors = [];
+				for($j = 0; $j < $colorCount; ++$j){
+					$colors[] = $this->getString();
+				}
+				$pieceTintColors[] = new PersonaPieceTintColor(
+					$pieceType,
+					$colors
+				);
+			}
+		}else{
+			$armSize = '';
+			$skinColor = '';
+			$personaPieces = [];
+			$pieceTintColors = [];
 		}
 
-		return new SkinData($skinId, $skinResourcePatch, $skinData, $animations, $capeData, $geometryData, $animationData, $premium, $persona, $capeOnClassic, $capeId, $fullSkinId, $armSize, $skinColor, $personaPieces, $pieceTintColors);
+		return new SkinData($skinId, $skinResourcePatch, $skinData, $animations, $capeData, $geometryData, $animationData, $premium, $persona, $capeOnClassic, $capeId, $fullSkinId, $armSize ?? 0, $skinColor, $personaPieces, $pieceTintColors);
 	}
 
 	/**
+	 * @param SkinData $skin
+	 * @param int      $protocolId
+	 *
 	 * @return void
 	 */
-	public function putSkin(SkinData $skin){
+	public function putSkin(SkinData $skin, int $protocolId){
 		$this->putString($skin->getSkinId());
 		$this->putString($skin->getResourcePatch());
 		$this->putSkinImage($skin->getSkinImage());
@@ -154,22 +166,24 @@ class NetworkBinaryStream extends BinaryStream{
 		$this->putBool($skin->isPersonaCapeOnClassic());
 		$this->putString($skin->getCapeId());
 		$this->putString($skin->getFullSkinId());
-		$this->putString($skin->getArmSize());
-		$this->putString($skin->getSkinColor());
-		$this->putLInt(count($skin->getPersonaPieces()));
-		foreach($skin->getPersonaPieces() as $piece){
-			$this->putString($piece->getPieceId());
-			$this->putString($piece->getPieceType());
-			$this->putString($piece->getPackId());
-			$this->putBool($piece->isDefaultPiece());
-			$this->putString($piece->getProductId());
-		}
-		$this->putLInt(count($skin->getPieceTintColors()));
-		foreach($skin->getPieceTintColors() as $tint){
-			$this->putString($tint->getPieceType());
-			$this->putLInt(count($tint->getColors()));
-			foreach($tint->getColors() as $color){
-				$this->putString($color);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_14_60){
+			$this->putString($skin->getArmSize());
+			$this->putString($skin->getSkinColor());
+			$this->putLInt(count($skin->getPersonaPieces()));
+			foreach($skin->getPersonaPieces() as $piece){
+				$this->putString($piece->getPieceId());
+				$this->putString($piece->getPieceType());
+				$this->putString($piece->getPackId());
+				$this->putBool($piece->isDefaultPiece());
+				$this->putString($piece->getProductId());
+			}
+			$this->putLInt(count($skin->getPieceTintColors()));
+			foreach($skin->getPieceTintColors() as $tint){
+				$this->putString($tint->getPieceType());
+				$this->putLInt(count($tint->getColors()));
+				foreach($tint->getColors() as $color){
+					$this->putString($color);
+				}
 			}
 		}
 	}
@@ -646,22 +660,28 @@ class NetworkBinaryStream extends BinaryStream{
 		}
 	}
 
-	protected function getEntityLink() : EntityLink{
+	protected function getEntityLink(int $protocolId) : EntityLink{
 		$link = new EntityLink();
 
 		$link->fromEntityUniqueId = $this->getEntityUniqueId();
 		$link->toEntityUniqueId = $this->getEntityUniqueId();
 		$link->type = $this->getByte();
 		$link->immediate = $this->getBool();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$link->changedByRider = $this->getBool();
+		}
 
 		return $link;
 	}
 
-	protected function putEntityLink(EntityLink $link) : void{
+	protected function putEntityLink(EntityLink $link, int $protocolId) : void{
 		$this->putEntityUniqueId($link->fromEntityUniqueId);
 		$this->putEntityUniqueId($link->toEntityUniqueId);
 		$this->putByte($link->type);
 		$this->putBool($link->immediate);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putBool($link->changedByRider);
+		}
 	}
 
 	protected function getCommandOriginData() : CommandOriginData{

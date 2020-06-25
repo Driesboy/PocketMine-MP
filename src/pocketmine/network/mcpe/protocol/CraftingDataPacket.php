@@ -67,10 +67,11 @@ class CraftingDataPacket extends DataPacket{
 	public function clean(){
 		$this->entries = [];
 		$this->decodedEntries = [];
+
 		return parent::clean();
 	}
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->decodedEntries = [];
 		$recipeCount = $this->getUnsignedVarInt();
 		for($i = 0; $i < $recipeCount; ++$i){
@@ -97,6 +98,9 @@ class CraftingDataPacket extends DataPacket{
 					$entry["uuid"] = $this->getUUID()->toString();
 					$entry["block"] = $this->getString();
 					$entry["priority"] = $this->getVarInt();
+					if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+						$entry["network_id"] = $this->getUnsignedVarInt();
+					}
 
 					break;
 				case self::ENTRY_SHAPED:
@@ -118,6 +122,9 @@ class CraftingDataPacket extends DataPacket{
 					$entry["uuid"] = $this->getUUID()->toString();
 					$entry["block"] = $this->getString();
 					$entry["priority"] = $this->getVarInt();
+					if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+						$entry["network_id"] = $this->getUnsignedVarInt();
+					}
 
 					break;
 				case self::ENTRY_FURNACE:
@@ -140,6 +147,9 @@ class CraftingDataPacket extends DataPacket{
 					break;
 				case self::ENTRY_MULTI:
 					$entry["uuid"] = $this->getUUID()->toString();
+					if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+						$entry["network_id"] = $this->getUnsignedVarInt();
+					}
 					break;
 				default:
 					throw new \UnexpectedValueException("Unhandled recipe type $recipeType!"); //do not continue attempting to decode
@@ -147,10 +157,22 @@ class CraftingDataPacket extends DataPacket{
 			$this->decodedEntries[] = $entry;
 		}
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$input = $this->getVarInt();
-			$ingredient = $this->getVarInt();
-			$output = $this->getVarInt();
-			$this->potionTypeRecipes[] = new PotionTypeRecipe($input, $ingredient, $output);
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+				$inputPotionId = $this->getVarInt();
+			} else {
+				$inputPotionId = 0;
+			}
+			$inputPotionType = $this->getVarInt();
+			$ingredientItemId = $this->getVarInt();
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+				$ingredientType = $this->getVarInt();
+				$outputId = $this->getVarInt();
+			} else {
+				$ingredientType = 0;
+				$outputId = 0;
+			}
+			$outputPotionType = $this->getVarInt();
+			$this->potionTypeRecipes[] = new PotionTypeRecipe($inputPotionId, $inputPotionType, $ingredientItemId, $ingredientType, $outputId, $outputPotionType);
 		}
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			$input = $this->getVarInt();
@@ -164,11 +186,11 @@ class CraftingDataPacket extends DataPacket{
 	/**
 	 * @param object              $entry
 	 */
-	private static function writeEntry($entry, NetworkBinaryStream $stream, int $pos) : int{
+	private static function writeEntry($entry, NetworkBinaryStream $stream, int $pos, int $protocolId) : int{
 		if($entry instanceof ShapelessRecipe){
-			return self::writeShapelessRecipe($entry, $stream, $pos);
+			return self::writeShapelessRecipe($entry, $stream, $pos, $protocolId);
 		}elseif($entry instanceof ShapedRecipe){
-			return self::writeShapedRecipe($entry, $stream, $pos);
+			return self::writeShapedRecipe($entry, $stream, $pos, $protocolId);
 		}elseif($entry instanceof FurnaceRecipe){
 			return self::writeFurnaceRecipe($entry, $stream);
 		}
@@ -177,7 +199,7 @@ class CraftingDataPacket extends DataPacket{
 		return -1;
 	}
 
-	private static function writeShapelessRecipe(ShapelessRecipe $recipe, NetworkBinaryStream $stream, int $pos) : int{
+	private static function writeShapelessRecipe(ShapelessRecipe $recipe, NetworkBinaryStream $stream, int $pos, int $protocolId) : int{
 		$stream->putString(Binary::writeInt($pos)); //some kind of recipe ID, doesn't matter what it is as long as it's unique
 		$stream->putUnsignedVarInt($recipe->getIngredientCount());
 		foreach($recipe->getIngredientList() as $item){
@@ -193,11 +215,14 @@ class CraftingDataPacket extends DataPacket{
 		$stream->put(str_repeat("\x00", 16)); //Null UUID
 		$stream->putString("crafting_table"); //TODO: blocktype (no prefix) (this might require internal API breaks)
 		$stream->putVarInt(50); //TODO: priority
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$stream->putVarInt($recipe->getNetworkId());
+		}
 
 		return CraftingDataPacket::ENTRY_SHAPELESS;
 	}
 
-	private static function writeShapedRecipe(ShapedRecipe $recipe, NetworkBinaryStream $stream, int $pos) : int{
+	private static function writeShapedRecipe(ShapedRecipe $recipe, NetworkBinaryStream $stream, int $pos, int $protocolId) : int{
 		$stream->putString(Binary::writeInt($pos)); //some kind of recipe ID, doesn't matter what it is as long as it's unique
 		$stream->putVarInt($recipe->getWidth());
 		$stream->putVarInt($recipe->getHeight());
@@ -217,6 +242,9 @@ class CraftingDataPacket extends DataPacket{
 		$stream->put(str_repeat("\x00", 16)); //Null UUID
 		$stream->putString("crafting_table"); //TODO: blocktype (no prefix) (this might require internal API breaks)
 		$stream->putVarInt(50); //TODO: priority
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$stream->putVarInt($recipe->getNetworkId());
+		}
 
 		return CraftingDataPacket::ENTRY_SHAPED;
 	}
@@ -254,13 +282,13 @@ class CraftingDataPacket extends DataPacket{
 		$this->entries[] = $recipe;
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putUnsignedVarInt(count($this->entries));
 
 		$writer = new NetworkBinaryStream();
 		$counter = 0;
 		foreach($this->entries as $d){
-			$entryType = self::writeEntry($d, $writer, $counter++);
+			$entryType = self::writeEntry($d, $writer, $counter++, $protocolId);
 			if($entryType >= 0){
 				$this->putVarInt($entryType);
 				$this->put($writer->getBuffer());
@@ -272,8 +300,15 @@ class CraftingDataPacket extends DataPacket{
 		}
 		$this->putUnsignedVarInt(count($this->potionTypeRecipes));
 		foreach($this->potionTypeRecipes as $recipe){
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+				$this->putVarInt($recipe->getInputPotionId());
+			}
 			$this->putVarInt($recipe->getInputPotionType());
 			$this->putVarInt($recipe->getIngredientItemId());
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+				$this->putVarInt($recipe->getIngredientItemType());
+				$this->putVarInt($recipe->getOutputPotionId());
+			}
 			$this->putVarInt($recipe->getOutputPotionType());
 		}
 		$this->putUnsignedVarInt(count($this->potionContainerRecipes));
@@ -284,6 +319,10 @@ class CraftingDataPacket extends DataPacket{
 		}
 
 		$this->putBool($this->cleanRecipes);
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

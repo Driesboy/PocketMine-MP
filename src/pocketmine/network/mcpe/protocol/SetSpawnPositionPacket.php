@@ -26,6 +26,7 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 
 class SetSpawnPositionPacket extends DataPacket{
 	public const NETWORK_ID = ProtocolInfo::SET_SPAWN_POSITION_PACKET;
@@ -43,17 +44,33 @@ class SetSpawnPositionPacket extends DataPacket{
 	public $z;
 	/** @var bool */
 	public $spawnForced;
+	/** @var int */
+	public $dimensionType = DimensionIds::OVERWORLD;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->spawnType = $this->getVarInt();
 		$this->getBlockPosition($this->x, $this->y, $this->z);
-		$this->spawnForced = $this->getBool();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->dimensionType = $this->getVarInt();
+			$this->getBlockPosition($this->x, $this->y, $this->z);
+		}else{
+			$this->spawnForced = $this->getBool();
+		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putVarInt($this->spawnType);
 		$this->putBlockPosition($this->x, $this->y, $this->z);
-		$this->putBool($this->spawnForced);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putVarInt($this->dimensionType);
+			$this->putBlockPosition($this->x, $this->y, $this->z);
+		}else{
+			$this->putBool($this->spawnForced);
+		}
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

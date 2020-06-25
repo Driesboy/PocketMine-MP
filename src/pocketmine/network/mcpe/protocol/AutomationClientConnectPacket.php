@@ -33,11 +33,11 @@ class AutomationClientConnectPacket extends DataPacket{
 	/** @var string */
 	public $serverUri;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->serverUri = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->serverUri);
 	}
 

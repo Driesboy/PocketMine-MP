@@ -33,11 +33,11 @@ class RemoveObjectivePacket extends DataPacket{
 	/** @var string */
 	public $objectiveName;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->objectiveName = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putString($this->objectiveName);
 	}
 

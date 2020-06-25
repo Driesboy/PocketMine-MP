@@ -33,11 +33,11 @@ class ContainerClosePacket extends DataPacket{
 	/** @var int */
 	public $windowId;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->windowId = $this->getByte();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putByte($this->windowId);
 	}
 

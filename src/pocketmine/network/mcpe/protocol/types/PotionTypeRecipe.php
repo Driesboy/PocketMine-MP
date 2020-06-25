@@ -25,16 +25,29 @@ namespace pocketmine\network\mcpe\protocol\types;
 
 class PotionTypeRecipe{
 	/** @var int */
+	private $inputPotionId;
+	/** @var int */
 	private $inputPotionType;
 	/** @var int */
 	private $ingredientItemId;
 	/** @var int */
+	private $ingredientItemType;
+	/** @var int */
+	private $outputPotionId;
+	/** @var int */
 	private $outputPotionType;
 
-	public function __construct(int $inputPotionType, int $ingredientItemId, int $outputPotionType){
+	public function __construct(int $inputPotionId, int $inputPotionType, int $ingredientItemId, int $ingredientItemType, int $outputPotionId, int $outputPotionType){
+		$this->inputPotionId = $inputPotionId;
 		$this->inputPotionType = $inputPotionType;
 		$this->ingredientItemId = $ingredientItemId;
+		$this->ingredientItemType = $ingredientItemType;
+		$this->outputPotionId = $outputPotionId;
 		$this->outputPotionType = $outputPotionType;
+	}
+
+	public function getInputPotionId() : int{
+		return $this->inputPotionId;
 	}
 
 	public function getInputPotionType() : int{
@@ -43,6 +56,14 @@ class PotionTypeRecipe{
 
 	public function getIngredientItemId() : int{
 		return $this->ingredientItemId;
+	}
+
+	public function getIngredientItemType() : int{
+		return $this->ingredientItemType;
+	}
+
+	public function getOutputPotionId() : int{
+		return $this->outputPotionId;
 	}
 
 	public function getOutputPotionType() : int{

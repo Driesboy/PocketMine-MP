@@ -87,7 +87,7 @@ class AddPlayerPacket extends DataPacket{
 	/** @var int */
 	public $buildPlatform = DeviceOS::UNKNOWN;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->uuid = $this->getUUID();
 		$this->username = $this->getString();
 		$this->entityUniqueId = $this->getEntityUniqueId();
@@ -111,14 +111,14 @@ class AddPlayerPacket extends DataPacket{
 
 		$linkCount = $this->getUnsignedVarInt();
 		for($i = 0; $i < $linkCount; ++$i){
-			$this->links[$i] = $this->getEntityLink();
+			$this->links[$i] = $this->getEntityLink($protocolId);
 		}
 
 		$this->deviceId = $this->getString();
 		$this->buildPlatform = $this->getLInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putUUID($this->uuid);
 		$this->putString($this->username);
 		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
@@ -142,7 +142,7 @@ class AddPlayerPacket extends DataPacket{
 
 		$this->putUnsignedVarInt(count($this->links));
 		foreach($this->links as $link){
-			$this->putEntityLink($link);
+			$this->putEntityLink($link, $protocolId);
 		}
 
 		$this->putString($this->deviceId);

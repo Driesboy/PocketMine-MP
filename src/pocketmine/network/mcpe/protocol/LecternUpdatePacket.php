@@ -43,14 +43,14 @@ class LecternUpdatePacket extends DataPacket/* implements ServerboundPacket*/{
 	/** @var bool */
 	public $dropBook;
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->page = $this->getByte();
 		$this->totalPages = $this->getByte();
 		$this->getBlockPosition($this->x, $this->y, $this->z);
 		$this->dropBook = $this->getBool();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putByte($this->page);
 		$this->putByte($this->totalPages);
 		$this->putBlockPosition($this->x, $this->y, $this->z);

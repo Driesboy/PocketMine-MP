@@ -47,11 +47,11 @@ class MultiplayerSettingsPacket extends DataPacket/* implements ClientboundPacke
 		return $this->action;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->action = $this->getVarInt();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putVarInt($this->action);
 	}
 

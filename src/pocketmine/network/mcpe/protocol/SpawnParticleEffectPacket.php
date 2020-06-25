@@ -41,14 +41,14 @@ class SpawnParticleEffectPacket extends DataPacket{
 	/** @var string */
 	public $particleName;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->dimensionId = $this->getByte();
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->position = $this->getVector3();
 		$this->particleName = $this->getString();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putByte($this->dimensionId);
 		$this->putEntityUniqueId($this->entityUniqueId);
 		$this->putVector3($this->position);

@@ -37,13 +37,13 @@ class ActorFallPacket extends DataPacket{
 	/** @var bool */
 	public $isInVoid;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->fallDistance = $this->getLFloat();
 		$this->isInVoid = $this->getBool();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putLFloat($this->fallDistance);
 		$this->putBool($this->isInVoid);

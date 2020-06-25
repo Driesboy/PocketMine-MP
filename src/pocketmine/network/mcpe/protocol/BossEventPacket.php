@@ -65,7 +65,7 @@ class BossEventPacket extends DataPacket{
 	/** @var int */
 	public $overlay;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->bossEid = $this->getEntityUniqueId();
 		$this->eventType = $this->getUnsignedVarInt();
 		switch($this->eventType){
@@ -95,7 +95,7 @@ class BossEventPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityUniqueId($this->bossEid);
 		$this->putUnsignedVarInt($this->eventType);
 		switch($this->eventType){

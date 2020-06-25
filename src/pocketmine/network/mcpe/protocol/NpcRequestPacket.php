@@ -46,14 +46,14 @@ class NpcRequestPacket extends DataPacket{
 	/** @var int */
 	public $actionType;
 
-	protected function decodePayload(){
+	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->requestType = $this->getByte();
 		$this->commandString = $this->getString();
 		$this->actionType = $this->getByte();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putByte($this->requestType);
 		$this->putString($this->commandString);
