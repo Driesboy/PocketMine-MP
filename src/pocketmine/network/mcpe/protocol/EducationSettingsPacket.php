@@ -73,23 +73,27 @@ class EducationSettingsPacket extends DataPacket{
 
 	protected function decodePayload(int $protocolId) : void{
 		$this->codeBuilderDefaultUri = $this->getString();
-		$this->codeBuilderTitle = $this->getString();
-		$this->canResizeCodeBuilder = $this->getBool();
-		if($this->getBool()){
-			$this->codeBuilderOverrideUri = $this->getString();
-		}else{
-			$this->codeBuilderOverrideUri = null;
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->codeBuilderTitle = $this->getString();
+			$this->canResizeCodeBuilder = $this->getBool();
+			if($this->getBool()){
+				$this->codeBuilderOverrideUri = $this->getString();
+			}else{
+				$this->codeBuilderOverrideUri = null;
+			}
 		}
 		$this->hasQuiz = $this->getBool();
 	}
 
 	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->codeBuilderDefaultUri);
-		$this->putString($this->codeBuilderTitle);
-		$this->putBool($this->canResizeCodeBuilder);
-		$this->putBool($this->codeBuilderOverrideUri !== null);
-		if($this->codeBuilderOverrideUri !== null){
-			$this->putString($this->codeBuilderOverrideUri);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putString($this->codeBuilderTitle);
+			$this->putBool($this->canResizeCodeBuilder);
+			$this->putBool($this->codeBuilderOverrideUri !== null);
+			if($this->codeBuilderOverrideUri !== null){
+				$this->putString($this->codeBuilderOverrideUri);
+			}
 		}
 		$this->putBool($this->hasQuiz);
 	}

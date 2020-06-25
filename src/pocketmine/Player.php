@@ -2392,15 +2392,17 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$isCraftingPart = false;
 		$isFinalCraftingPart = false;
 		foreach($packet->actions as $networkInventoryAction){
-			if(
-				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO and (
-					$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
-					$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
-				)
-			){
-				$isCraftingPart = true;
-				if($networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT){
-					$isFinalCraftingPart = true;
+			if($this->protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+				if(
+					$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO and (
+						$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
+						$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
+					)
+				){
+					$isCraftingPart = true;
+					if($networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT){
+						$isFinalCraftingPart = true;
+					}
 				}
 			}
 			try{
@@ -2415,7 +2417,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			}
 		}
 
-		if($isCraftingPart){
+		if($isCraftingPart || $packet->isCraftingPart){
 			if($this->craftingTransaction === null){
 				$this->craftingTransaction = new CraftingTransaction($this, $actions);
 			}else{
@@ -2424,7 +2426,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 				}
 			}
 
-			if($isFinalCraftingPart){
+			if($isFinalCraftingPart || $packet->isCraftingPart){
 				//we get the actions for this in several packets, so we need to wait until we have all the pieces before
 				//trying to execute it
 

@@ -51,12 +51,12 @@ class UpdatePlayerGameTypePacket extends DataPacket/* implements ClientboundPack
 
 	public function getPlayerEntityUniqueId() : int{ return $this->playerEntityUniqueId; }
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->gameMode = $this->getVarInt();
 		$this->playerEntityUniqueId = $this->getEntityUniqueId();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putVarInt($this->gameMode);
 		$this->putEntityUniqueId($this->playerEntityUniqueId);
 	}

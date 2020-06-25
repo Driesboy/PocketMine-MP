@@ -25,6 +25,7 @@ namespace pocketmine\network\mcpe\protocol\types;
 
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\NetworkBinaryStream;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 
 final class ItemStackWrapper{
 
@@ -46,14 +47,20 @@ final class ItemStackWrapper{
 
 	public function getItemStack() : Item{ return $this->itemStack; }
 
-	public static function read(NetworkBinaryStream $in) : self{
-		$stackId = $in->readGenericTypeNetworkId();
+	public static function read(NetworkBinaryStream $in, int $protocolId) : self{
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$stackId = $in->readGenericTypeNetworkId();
+		} else {
+			$stackId = 0;
+		}
 		$stack = $in->getSlot();
 		return new self($stackId, $stack);
 	}
 
-	public function write(NetworkBinaryStream $out) : void{
-		$out->writeGenericTypeNetworkId($this->stackId);
+	public function write(NetworkBinaryStream $out, int $protocolId) : void{
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$out->writeGenericTypeNetworkId($this->stackId);
+		}
 		$out->putSlot($this->itemStack);
 	}
 }

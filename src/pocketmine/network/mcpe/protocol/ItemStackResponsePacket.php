@@ -47,14 +47,14 @@ class ItemStackResponsePacket extends DataPacket/* implements ClientboundPacket*
 	/** @return ItemStackResponse[] */
 	public function getResponses() : array{ return $this->responses; }
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->responses = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
 			$this->responses[] = ItemStackResponse::read($this);
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putUnsignedVarInt(count($this->responses));
 		foreach($this->responses as $response){
 			$response->write($this);

@@ -47,14 +47,14 @@ class ItemStackRequestPacket extends DataPacket/* implements ServerboundPacket*/
 	/** @return ItemStackRequest[] */
 	public function getRequests() : array{ return $this->requests; }
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->requests = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
 			$this->requests[] = ItemStackRequest::read($this);
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putUnsignedVarInt(count($this->requests));
 		foreach($this->requests as $request){
 			$request->write($this);

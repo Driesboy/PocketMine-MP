@@ -28,6 +28,7 @@ use pocketmine\inventory\Inventory;
 use pocketmine\inventory\transaction\action\InventoryAction;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\Player;
 use function array_keys;
 use function assert;
@@ -250,7 +251,7 @@ class InventoryTransaction{
 	 *
 	 * @throws TransactionValidationException
 	 */
-	public function validate() : void{
+	public function validate(int $protocolId) : void{
 		$this->squashDuplicateSlotChanges();
 
 		$haveItems = [];
@@ -294,7 +295,7 @@ class InventoryTransaction{
 		$this->shuffleActions();
 
 		try{
-			$this->validate();
+			$this->validate($this->getSource()->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0 ? ProtocolInfo::PROTOCOL_1_16_0 : ProtocolInfo::PROTOCOL_1_14_0);
 		}catch(TransactionValidationException $e){
 			$this->sendInventories();
 			throw $e;

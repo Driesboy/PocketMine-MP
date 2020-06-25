@@ -52,7 +52,7 @@ class EmoteListPacket extends DataPacket/* implements ClientboundPacket*/{
 	/** @return UUID[] */
 	public function getEmoteIds() : array{ return $this->emoteIds; }
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->playerEntityRuntimeId = $this->getEntityRuntimeId();
 		$this->emoteIds = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
@@ -60,7 +60,7 @@ class EmoteListPacket extends DataPacket/* implements ClientboundPacket*/{
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putEntityRuntimeId($this->playerEntityRuntimeId);
 		$this->putUnsignedVarInt(count($this->emoteIds));
 		foreach($this->emoteIds as $emoteId){

@@ -69,7 +69,7 @@ class PlayerArmorDamagePacket extends DataPacket/* implements ClientboundPacket*
 		return null;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$flags = $this->getByte();
 
 		$this->headSlotDamage = $this->maybeReadDamage($flags, self::FLAG_HEAD);
@@ -88,7 +88,7 @@ class PlayerArmorDamagePacket extends DataPacket/* implements ClientboundPacket*
 		}
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putByte(
 			$this->composeFlag($this->headSlotDamage, self::FLAG_HEAD) |
 			$this->composeFlag($this->chestSlotDamage, self::FLAG_CHEST) |

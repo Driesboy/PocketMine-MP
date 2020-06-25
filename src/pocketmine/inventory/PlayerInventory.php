@@ -34,6 +34,7 @@ use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\ContainerIds;
 use pocketmine\network\mcpe\protocol\types\CreativeContentEntry;
+use pocketmine\network\mcpe\protocol\types\ItemStackWrapper;
 use pocketmine\Player;
 use function array_map;
 use function in_array;
@@ -225,7 +226,6 @@ class PlayerInventory extends BaseInventory{
 			throw new \LogicException("Cannot send creative inventory contents to non-player inventory holder");
 		}
 
-
 		if($holder->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
 			$nextEntryId = 1;
 			$entries = array_map(function(Item $item) use (&$nextEntryId) : CreativeContentEntry{
@@ -238,9 +238,7 @@ class PlayerInventory extends BaseInventory{
 			$pk->windowId = ContainerIds::CREATIVE;
 
 			if(!$holder->isSpectator()){ //fill it for all gamemodes except spectator
-				foreach(Item::getCreativeItems() as $i => $item){
-					$pk->items[$i] = clone $item;
-				}
+				$pk->items = array_map([ItemStackWrapper::class, 'legacy'], Item::getCreativeItems());
 			}
 		}
 

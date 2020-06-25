@@ -50,12 +50,12 @@ class CodeBuilderPacket extends DataPacket/* implements ClientboundPacket*/{
 		return $this->openCodeBuilder;
 	}
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->url = $this->getString();
 		$this->openCodeBuilder = $this->getBool();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putString($this->url);
 		$this->putBool($this->openCodeBuilder);
 	}

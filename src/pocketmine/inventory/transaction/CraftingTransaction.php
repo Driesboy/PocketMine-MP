@@ -27,6 +27,8 @@ use pocketmine\event\inventory\CraftItemEvent;
 use pocketmine\inventory\CraftingRecipe;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\protocol\ContainerClosePacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\network\mcpe\protocol\types\ContainerIds;
 use pocketmine\Player;
 use function array_pop;
 use function count;
@@ -119,7 +121,7 @@ class CraftingTransaction extends InventoryTransaction{
 		return $iterations;
 	}
 
-	public function validate() : void{
+	public function validate(int $protocolId) : void{
 		$this->squashDuplicateSlotChanges();
 		if(count($this->actions) < 1){
 			throw new TransactionValidationException("Transaction must have at least one action to be executable");
@@ -128,7 +130,7 @@ class CraftingTransaction extends InventoryTransaction{
 		$this->matchItems($this->outputs, $this->inputs);
 
 		$failed = 0;
-		foreach($this->source->getServer()->getCraftingManager()->matchRecipeByOutputs($this->outputs) as $recipe){
+		foreach($this->source->getServer()->getCraftingManager()->matchRecipeByOutputs($protocolId, $this->outputs) as $recipe){
 			try{
 				//compute number of times recipe was crafted
 				$this->repetitions = $this->matchRecipeItems($this->outputs, $recipe->getResultsFor($this->source->getCraftingGrid()), false);
@@ -165,7 +167,11 @@ class CraftingTransaction extends InventoryTransaction{
 		 * transaction goes wrong.
 		 */
 		$pk = new ContainerClosePacket();
-		$pk->windowId = Player::HARDCODED_CRAFTING_GRID_WINDOW_ID;
+		if($this->source->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+			$pk->windowId = Player::HARDCODED_CRAFTING_GRID_WINDOW_ID;
+		} else {
+			$pk->windowId = ContainerIds::NONE;
+		}
 		$this->source->dataPacket($pk);
 	}
 

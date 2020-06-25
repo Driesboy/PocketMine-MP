@@ -64,14 +64,14 @@ class PacketViolationWarningPacket extends DataPacket/* implements ServerboundPa
 
 	public function getMessage() : string{ return $this->message; }
 
-	protected function decodePayload() : void{
+	protected function decodePayload(int $protocolId) : void{
 		$this->type = $this->getVarInt();
 		$this->severity = $this->getVarInt();
 		$this->packetId = $this->getVarInt();
 		$this->message = $this->getString();
 	}
 
-	protected function encodePayload() : void{
+	protected function encodePayload(int $protocolId) : void{
 		$this->putVarInt($this->type);
 		$this->putVarInt($this->severity);
 		$this->putVarInt($this->packetId);
