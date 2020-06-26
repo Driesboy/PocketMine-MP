@@ -85,8 +85,6 @@ class NetworkInventoryAction{
 	public $newItemStackId = null;
 
 	/**
-	 * @param bool                       $hasItemStackIds
-	 *
 	 * @return $this
 	 */
 	public function read(NetworkBinaryStream $packet, bool $hasItemStackIds){

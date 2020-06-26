@@ -32,12 +32,10 @@ class ShapelessRecipe implements CraftingRecipe{
 	private $ingredients = [];
 	/** @var Item[] */
 	private $results;
-	/** @var int */
-	private $networkId;
 
 	/**
-	 * @param Item[]   $ingredients No more than 9 total. This applies to sum of item stack counts, not count of array.
-	 * @param Item[]   $results List of result items created by this recipe.
+	 * @param Item[] $ingredients No more than 9 total. This applies to sum of item stack counts, not count of array.
+	 * @param Item[] $results List of result items created by this recipe.
 	 */
 	public function __construct(array $ingredients, array $results){
 		foreach($ingredients as $item){

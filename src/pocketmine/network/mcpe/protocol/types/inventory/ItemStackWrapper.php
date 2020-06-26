@@ -50,11 +50,9 @@ final class ItemStackWrapper{
 	public static function read(NetworkBinaryStream $in, int $protocolId) : self{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$stackId = $in->readGenericTypeNetworkId();
-		}else{
-			$stackId = 0;
 		}
 		$stack = $in->getSlot();
-		return new self($stackId, $stack);
+		return new self($stackId ?? 0, $stack);
 	}
 
 	public function write(NetworkBinaryStream $out, int $protocolId) : void{

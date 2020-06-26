@@ -167,8 +167,6 @@ class StartGamePacket extends DataPacket{
 	public $enchantmentSeed = 0;
 	/** @var string */
 	public $multiplayerCorrelationId = ""; //TODO: this should be filled with a UUID of some sort
-	/** @var bool */
-	public $itemNetStackManager = false;
 
 	/** @var ListTag|null */
 	public $blockTable = null;

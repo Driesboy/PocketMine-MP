@@ -26,7 +26,7 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
-use pocketmine\network\mcpe\protocol\types\ItemStackWrapper;
+use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use function count;
 
 class InventoryContentPacket extends DataPacket{

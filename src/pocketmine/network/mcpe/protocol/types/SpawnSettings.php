@@ -62,13 +62,10 @@ final class SpawnSettings{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$biomeType = $in->getLShort();
 			$biomeName = $in->getString();
-		}else{
-			$biomeType = self::BIOME_TYPE_DEFAULT;
-			$biomeName = '';
 		}
 		$dimension = $in->getVarInt();
 
-		return new self($biomeType, $biomeName, $dimension);
+		return new self($biomeType ?? self::BIOME_TYPE_DEFAULT, $biomeName ?? '', $dimension);
 	}
 
 	public function write(NetworkBinaryStream $out, int $protocolId) : void{

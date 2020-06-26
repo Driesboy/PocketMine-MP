@@ -60,7 +60,6 @@ class ShapedRecipe implements CraftingRecipe{
 	 * @param Item[]   $results List of items that this recipe produces when crafted.
 	 *
 	 * Note: Recipes **do not** need to be square. Do NOT add padding for empty rows/columns.
-	 * @param int|null $networkId
 	 */
 	public function __construct(array $shape, array $ingredients, array $results){
 		$this->height = count($shape);
