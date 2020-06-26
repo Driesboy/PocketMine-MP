@@ -54,7 +54,7 @@ class CraftingTable extends Solid{
 		if($player instanceof Player){
 			$player->setCraftingGrid(new CraftingGrid($player, CraftingGrid::SIZE_BIG));
 
-			if($player->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+			if(!$player->hasInventoryOpen && $player->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
 				//TODO: HACK! crafting grid doesn't fit very well into the current PM container system, so this hack allows
 				//it to carry on working approximately the same way as it did in 1.14
 				$pk = new ContainerOpenPacket();
@@ -64,6 +64,8 @@ class CraftingTable extends Solid{
 				$pk->y = $this->getFloorY();
 				$pk->z = $this->getFloorZ();
 				$player->sendDataPacket($pk);
+
+				$player->hasInventoryOpen = true;
 			}
 		}
 

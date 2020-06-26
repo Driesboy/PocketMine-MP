@@ -62,7 +62,7 @@ final class SpawnSettings{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$biomeType = $in->getLShort();
 			$biomeName = $in->getString();
-		} else {
+		}else{
 			$biomeType = self::BIOME_TYPE_DEFAULT;
 			$biomeName = '';
 		}

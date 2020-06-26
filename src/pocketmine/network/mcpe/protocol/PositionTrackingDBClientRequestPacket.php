@@ -52,7 +52,7 @@ class PositionTrackingDBClientRequestPacket extends DataPacket/* implements Serv
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$this->action = $this->getByte();
 			$this->trackingId = $this->getVarInt();
-		} else {
+		}else{
 			$this->getString();
 			$this->getLFloat();
 			$this->getByte();

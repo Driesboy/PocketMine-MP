@@ -365,6 +365,8 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $sleeping = null;
 	/** @var Position|null */
 	private $spawnPosition = null;
+	/** @var bool */
+	public $hasInventoryOpen = false;
 
 	//TODO: Abilities
 	/** @var bool */
@@ -2402,6 +2404,23 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 						$isFinalCraftingPart = true;
 					}
 				}
+			}elseif(
+				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_CONTAINER and
+				$networkInventoryAction->windowId === ContainerIds::UI and
+				$networkInventoryAction->inventorySlot === 50 and
+				!$networkInventoryAction->oldItem->equalsExact($networkInventoryAction->newItem)
+			){
+				$isCraftingPart = true;
+				if(!$networkInventoryAction->oldItem->isNull() and $networkInventoryAction->newItem->isNull()){
+					$isFinalCraftingPart = true;
+				}
+			}elseif(
+				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO and (
+					$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
+					$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
+				)
+			){
+				$isCraftingPart = true;
 			}
 			try{
 				$action = $networkInventoryAction->createInventoryAction($this);
@@ -2415,7 +2434,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			}
 		}
 
-		if($isCraftingPart || $packet->isCraftingPart){
+		if($isCraftingPart){
 			if($this->craftingTransaction === null){
 				$this->craftingTransaction = new CraftingTransaction($this, $actions);
 			}else{
@@ -2424,7 +2443,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 				}
 			}
 
-			if($isFinalCraftingPart || $packet->isCraftingPart){
+			if($isFinalCraftingPart){
 				//we get the actions for this in several packets, so we need to wait until we have all the pieces before
 				//trying to execute it
 
@@ -2803,7 +2822,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			case InteractPacket::ACTION_MOUSEOVER:
 				break; //TODO: handle these
 			case InteractPacket::ACTION_OPEN_INVENTORY:
-				if($target === $this && $this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
+				if($target === $this && !$this->hasInventoryOpen && $this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
 					//TODO: HACK! this restores 1.14ish behaviour, but this should be able to be listened to and
 					//controlled by plugins. However, the player is always a subscriber to their own inventory so it
 					//doesn't integrate well with the regular container system right now.
@@ -2813,6 +2832,8 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 					$pk->x = $pk->y = $pk->z = 0;
 					$pk->entityUniqueId = $this->getId();
 					$this->sendDataPacket($pk);
+
+					$this->hasInventoryOpen = true;
 					break;
 				}
 				return false;
@@ -3039,6 +3060,8 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$pk = new ContainerClosePacket();
 			$pk->windowId = $packet->windowId;
 			$this->sendDataPacket($pk);
+
+			$this->hasInventoryOpen = false;
 			return true;
 		}
 		if(isset($this->windowIndex[$packet->windowId])){

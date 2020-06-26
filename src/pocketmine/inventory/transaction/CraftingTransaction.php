@@ -169,7 +169,8 @@ class CraftingTransaction extends InventoryTransaction{
 		$pk = new ContainerClosePacket();
 		if($this->source->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
 			$pk->windowId = Player::HARDCODED_CRAFTING_GRID_WINDOW_ID;
-		} else {
+			$this->getSource()->hasInventoryOpen = false;
+		}else{
 			$pk->windowId = ContainerIds::NONE;
 		}
 		$this->source->dataPacket($pk);

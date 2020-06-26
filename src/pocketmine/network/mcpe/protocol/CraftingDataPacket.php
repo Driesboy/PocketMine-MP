@@ -158,7 +158,7 @@ class CraftingDataPacket extends DataPacket{
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 				$input = $this->getVarInt();
-			} else {
+			}else{
 				$input = 0;
 			}
 			$inputMeta = $this->getVarInt();
@@ -166,7 +166,7 @@ class CraftingDataPacket extends DataPacket{
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 				$ingredientMeta = $this->getVarInt();
 				$output = $this->getVarInt();
-			} else {
+			}else{
 				$ingredientMeta = 0;
 				$output = 0;
 			}

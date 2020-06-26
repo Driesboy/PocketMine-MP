@@ -665,7 +665,7 @@ class NetworkBinaryStream extends BinaryStream{
 		$immediate = $this->getBool();
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$causedByRider = $this->getBool();
-		} else {
+		}else{
 			$causedByRider = false;
 		}
 		return new EntityLink($fromEntityUniqueId, $toEntityUniqueId, $type, $immediate, $causedByRider);
