@@ -26,7 +26,11 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
+<<<<<<< HEAD
 use pocketmine\network\mcpe\protocol\types\stackrequest\ItemStackRequest;
+=======
+use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\ItemStackRequest;
+>>>>>>> upstream/stable
 use function count;
 
 class ItemStackRequestPacket extends DataPacket/* implements ServerboundPacket*/{
@@ -47,14 +51,22 @@ class ItemStackRequestPacket extends DataPacket/* implements ServerboundPacket*/
 	/** @return ItemStackRequest[] */
 	public function getRequests() : array{ return $this->requests; }
 
+<<<<<<< HEAD
 	protected function decodePayload(int $protocolId) : void{
+=======
+	protected function decodePayload() : void{
+>>>>>>> upstream/stable
 		$this->requests = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
 			$this->requests[] = ItemStackRequest::read($this);
 		}
 	}
 
+<<<<<<< HEAD
 	protected function encodePayload(int $protocolId) : void{
+=======
+	protected function encodePayload() : void{
+>>>>>>> upstream/stable
 		$this->putUnsignedVarInt(count($this->requests));
 		foreach($this->requests as $request){
 			$request->write($this);

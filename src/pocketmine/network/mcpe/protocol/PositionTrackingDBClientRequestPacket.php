@@ -49,23 +49,13 @@ class PositionTrackingDBClientRequestPacket extends DataPacket/* implements Serv
 	public function getTrackingId() : int{ return $this->trackingId; }
 
 	protected function decodePayload(int $protocolId) : void{
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->action = $this->getByte();
-			$this->trackingId = $this->getVarInt();
-		}else{
-			$this->getString();
-			$this->getLFloat();
-			$this->getByte();
-			$this->getLInt();
-			$this->getLInt();
-		}
+		$this->action = $this->getByte();
+		$this->trackingId = $this->getVarInt();
 	}
 
 	protected function encodePayload(int $protocolId) : void{
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->putByte($this->action);
-			$this->putVarInt($this->trackingId);
-		}
+		$this->putByte($this->action);
+		$this->putVarInt($this->trackingId);
 	}
 
 	public function handle(NetworkSession $handler) : bool{

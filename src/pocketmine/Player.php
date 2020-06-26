@@ -231,9 +231,10 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	//TODO: HACK!
 	//these IDs are used for 1.16 to restore 1.14ish crafting & inventory behaviour; since they don't seem to have any
 	//effect on the behaviour of inventory transactions I don't currently plan to integrate these into the main system.
-	private const HIGHEST_DYNAMIC_WINDOW_ID = ContainerIds::LAST - 10;
-	public const HARDCODED_CRAFTING_GRID_WINDOW_ID = self::HIGHEST_DYNAMIC_WINDOW_ID + 1;
-	public const HARDCODED_INVENTORY_WINDOW_ID = self::HIGHEST_DYNAMIC_WINDOW_ID + 2;
+	private const RESERVED_WINDOW_ID_RANGE_START = ContainerIds::LAST - 10;
+	private const RESERVED_WINDOW_ID_RANGE_END = ContainerIds::LAST;
+	public const HARDCODED_CRAFTING_GRID_WINDOW_ID = self::RESERVED_WINDOW_ID_RANGE_START + 1;
+	public const HARDCODED_INVENTORY_WINDOW_ID = self::RESERVED_WINDOW_ID_RANGE_START + 2;
 
 	/**
 	 * Validates the given username.
@@ -2422,6 +2423,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			){
 				$isCraftingPart = true;
 			}
+
 			try{
 				$action = $networkInventoryAction->createInventoryAction($this);
 				if($action !== null){
@@ -3056,7 +3058,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 		$this->doCloseInventory();
 
-		if($packet->windowId > self::HIGHEST_DYNAMIC_WINDOW_ID and $packet->windowId <= ContainerIds::LAST){
+		if($packet->windowId >= self::RESERVED_WINDOW_ID_RANGE_START and $packet->windowId <= self::RESERVED_WINDOW_ID_RANGE_END){
 			$pk = new ContainerClosePacket();
 			$pk->windowId = $packet->windowId;
 			$this->sendDataPacket($pk);
@@ -4041,7 +4043,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		if($forceId === null){
 			$cnt = $this->windowCnt;
 			do{
-				$cnt = max(ContainerIds::FIRST, ($cnt + 1) % self::HIGHEST_DYNAMIC_WINDOW_ID);
+				$cnt = max(ContainerIds::FIRST, ($cnt + 1) % self::RESERVED_WINDOW_ID_RANGE_START);
 				if($cnt === $this->windowCnt){ //wraparound, no free slots
 					throw new \InvalidStateException("No free window IDs found");
 				}
@@ -4049,7 +4051,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$this->windowCnt = $cnt;
 		}else{
 			$cnt = $forceId;
-			if(isset($this->windowIndex[$cnt])){
+			if(isset($this->windowIndex[$cnt]) or ($cnt >= self::RESERVED_WINDOW_ID_RANGE_START && $cnt <= self::RESERVED_WINDOW_ID_RANGE_END)){
 				throw new \InvalidArgumentException("Requested force ID $forceId already in use");
 			}
 		}

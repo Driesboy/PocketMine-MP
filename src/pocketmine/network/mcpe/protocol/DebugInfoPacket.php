@@ -49,12 +49,20 @@ class DebugInfoPacket extends DataPacket/* implements ClientboundPacket, Serverb
 
 	public function getData() : string{ return $this->data; }
 
+<<<<<<< HEAD
 	protected function decodePayload(int $protocolId) : void{
+=======
+	protected function decodePayload() : void{
+>>>>>>> upstream/stable
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->data = $this->getString();
 	}
 
+<<<<<<< HEAD
 	protected function encodePayload(int $protocolId) : void{
+=======
+	protected function encodePayload() : void{
+>>>>>>> upstream/stable
 		$this->putEntityUniqueId($this->entityUniqueId);
 		$this->putString($this->data);
 	}

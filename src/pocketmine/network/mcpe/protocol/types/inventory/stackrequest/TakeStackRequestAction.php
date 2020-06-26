@@ -21,19 +21,13 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types;
+namespace pocketmine\network\mcpe\protocol\types\inventory\stackrequest;
 
-interface ContainerIds{
+/**
+ * Takes some (or all) of the items from the source slot into the destination slot (usually the cursor?).
+ */
+final class TakeStackRequestAction extends ItemStackRequestAction{
+	use TakeOrPlaceStackRequestActionTrait;
 
-	public const NONE = -1;
-	public const INVENTORY = 0;
-	public const FIRST = 1;
-	public const LAST = 100;
-	public const OFFHAND = 119;
-	public const ARMOR = 120;
-
-	public const HOTBAR = 122;
-	public const FIXED_INVENTORY = 123;
-	public const UI = 124;
-
+	public static function getTypeId() : int{ return ItemStackRequestActionType::TAKE; }
 }

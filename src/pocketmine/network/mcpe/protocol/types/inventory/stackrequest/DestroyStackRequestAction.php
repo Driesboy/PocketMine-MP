@@ -21,19 +21,14 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types;
+namespace pocketmine\network\mcpe\protocol\types\inventory\stackrequest;
 
-interface ContainerIds{
+/**
+ * Sends some (or all) items from the source slot to /dev/null. This happens when the player clicks items into the
+ * creative inventory menu in creative mode.
+ */
+final class DestroyStackRequestAction extends ItemStackRequestAction{
+	use DisappearStackRequestActionTrait;
 
-	public const NONE = -1;
-	public const INVENTORY = 0;
-	public const FIRST = 1;
-	public const LAST = 100;
-	public const OFFHAND = 119;
-	public const ARMOR = 120;
-
-	public const HOTBAR = 122;
-	public const FIXED_INVENTORY = 123;
-	public const UI = 124;
-
+	public static function getTypeId() : int{ return ItemStackRequestActionType::DESTROY; }
 }

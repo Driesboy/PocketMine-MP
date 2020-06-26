@@ -21,19 +21,23 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types;
+namespace pocketmine\network\mcpe\protocol\types\inventory\stackrequest;
 
-interface ContainerIds{
+use pocketmine\network\mcpe\NetworkBinaryStream;
 
-	public const NONE = -1;
-	public const INVENTORY = 0;
-	public const FIRST = 1;
-	public const LAST = 100;
-	public const OFFHAND = 119;
-	public const ARMOR = 120;
+/**
+ * Not clear what the point of this is. It's sent when the player uses a lab table, but it's not clear why this action
+ * is needed.
+ */
+final class LabTableCombineStackRequestAction extends ItemStackRequestAction{
 
-	public const HOTBAR = 122;
-	public const FIXED_INVENTORY = 123;
-	public const UI = 124;
+	public static function getTypeId() : int{ return ItemStackRequestActionType::LAB_TABLE_COMBINE; }
 
+	public static function read(NetworkBinaryStream $in) : self{
+		return new self;
+	}
+
+	public function write(NetworkBinaryStream $out) : void{
+		//NOOP
+	}
 }
