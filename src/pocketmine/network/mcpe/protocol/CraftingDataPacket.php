@@ -158,20 +158,15 @@ class CraftingDataPacket extends DataPacket{
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 				$input = $this->getVarInt();
-			}else{
-				$input = 0;
 			}
 			$inputMeta = $this->getVarInt();
 			$ingredient = $this->getVarInt();
 			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 				$ingredientMeta = $this->getVarInt();
 				$output = $this->getVarInt();
-			}else{
-				$ingredientMeta = 0;
-				$output = 0;
 			}
 			$outputMeta = $this->getVarInt();
-			$this->potionTypeRecipes[] = new PotionTypeRecipe($input, $inputMeta, $ingredient, $ingredientMeta, $output, $outputMeta);
+			$this->potionTypeRecipes[] = new PotionTypeRecipe($input ?? 0, $inputMeta, $ingredient, $ingredientMeta ?? 0, $output, $outputMeta ?? 0);
 		}
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
 			$input = $this->getVarInt();

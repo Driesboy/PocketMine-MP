@@ -2423,7 +2423,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			){
 				$isCraftingPart = true;
 			}
-
 			try{
 				$action = $networkInventoryAction->createInventoryAction($this);
 				if($action !== null){
