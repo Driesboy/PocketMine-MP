@@ -49,22 +49,14 @@ class PlayerEnchantOptionsPacket extends DataPacket/* implements ClientboundPack
 	 */
 	public function getOptions() : array{ return $this->options; }
 
-<<<<<<< HEAD
 	protected function decodePayload(int $protocolId) : void{
-=======
-	protected function decodePayload() : void{
->>>>>>> upstream/stable
 		$this->options = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
 			$this->options[] = EnchantOption::read($this);
 		}
 	}
 
-<<<<<<< HEAD
 	protected function encodePayload(int $protocolId) : void{
-=======
-	protected function encodePayload() : void{
->>>>>>> upstream/stable
 		$this->putUnsignedVarInt(count($this->options));
 		foreach($this->options as $option){
 			$option->write($this);

@@ -26,11 +26,7 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
-<<<<<<< HEAD
-use pocketmine\network\mcpe\protocol\types\CreativeContentEntry;
-=======
 use pocketmine\network\mcpe\protocol\types\inventory\CreativeContentEntry;
->>>>>>> upstream/stable
 use function count;
 
 class CreativeContentPacket extends DataPacket/* implements ClientboundPacket*/{
@@ -51,22 +47,14 @@ class CreativeContentPacket extends DataPacket/* implements ClientboundPacket*/{
 	/** @return CreativeContentEntry[] */
 	public function getEntries() : array{ return $this->entries; }
 
-<<<<<<< HEAD
 	protected function decodePayload(int $protocolId) : void{
-=======
-	protected function decodePayload() : void{
->>>>>>> upstream/stable
 		$this->entries = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
 			$this->entries[] = CreativeContentEntry::read($this);
 		}
 	}
 
-<<<<<<< HEAD
 	protected function encodePayload(int $protocolId) : void{
-=======
-	protected function encodePayload() : void{
->>>>>>> upstream/stable
 		$this->putUnsignedVarInt(count($this->entries));
 		foreach($this->entries as $entry){
 			$entry->write($this);

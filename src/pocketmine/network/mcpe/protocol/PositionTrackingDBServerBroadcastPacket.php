@@ -57,11 +57,7 @@ class PositionTrackingDBServerBroadcastPacket extends DataPacket/* implements Cl
 
 	public function getNbt() : CompoundTag{ return $this->nbt; }
 
-<<<<<<< HEAD
 	protected function decodePayload(int $protocolId) : void{
-=======
-	protected function decodePayload() : void{
->>>>>>> upstream/stable
 		$this->action = $this->getByte();
 		$this->trackingId = $this->getVarInt();
 		$offset = $this->getOffset();
@@ -73,11 +69,7 @@ class PositionTrackingDBServerBroadcastPacket extends DataPacket/* implements Cl
 		$this->nbt = $nbt;
 	}
 
-<<<<<<< HEAD
 	protected function encodePayload(int $protocolId) : void{
-=======
-	protected function encodePayload() : void{
->>>>>>> upstream/stable
 		$this->putByte($this->action);
 		$this->putVarInt($this->trackingId);
 		$this->put((new NetworkLittleEndianNBTStream())->write($this->nbt));

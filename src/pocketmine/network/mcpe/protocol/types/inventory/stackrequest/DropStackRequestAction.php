@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\protocol\types\inventory\stackrequest;
 
 use pocketmine\network\mcpe\NetworkBinaryStream;
+use pocketmine\network\mcpe\protocol\types\ItemStackRequestSlotInfo;
 
 /**
  * Drops some (or all) items from the source slot into the world as an item entity.

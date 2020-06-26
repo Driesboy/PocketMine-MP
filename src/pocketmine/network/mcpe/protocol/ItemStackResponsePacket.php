@@ -26,11 +26,7 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
-<<<<<<< HEAD
-use pocketmine\network\mcpe\protocol\types\ItemStackResponse;
-=======
 use pocketmine\network\mcpe\protocol\types\inventory\stackresponse\ItemStackResponse;
->>>>>>> upstream/stable
 use function count;
 
 class ItemStackResponsePacket extends DataPacket/* implements ClientboundPacket*/{
@@ -51,22 +47,14 @@ class ItemStackResponsePacket extends DataPacket/* implements ClientboundPacket*
 	/** @return ItemStackResponse[] */
 	public function getResponses() : array{ return $this->responses; }
 
-<<<<<<< HEAD
 	protected function decodePayload(int $protocolId) : void{
-=======
-	protected function decodePayload() : void{
->>>>>>> upstream/stable
 		$this->responses = [];
 		for($i = 0, $len = $this->getUnsignedVarInt(); $i < $len; ++$i){
 			$this->responses[] = ItemStackResponse::read($this);
 		}
 	}
 
-<<<<<<< HEAD
 	protected function encodePayload(int $protocolId) : void{
-=======
-	protected function encodePayload() : void{
->>>>>>> upstream/stable
 		$this->putUnsignedVarInt(count($this->responses));
 		foreach($this->responses as $response){
 			$response->write($this);

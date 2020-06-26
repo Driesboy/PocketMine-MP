@@ -24,10 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\protocol\types;
 
 use pocketmine\network\mcpe\NetworkBinaryStream;
-<<<<<<< HEAD
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
-=======
->>>>>>> upstream/stable
 
 final class SpawnSettings{
 	public const BIOME_TYPE_DEFAULT = 0;
@@ -61,7 +58,6 @@ final class SpawnSettings{
 		return $this->dimension;
 	}
 
-<<<<<<< HEAD
 	public static function read(NetworkBinaryStream $in, int $protocolId) : self{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$biomeType = $in->getLShort();
@@ -70,27 +66,16 @@ final class SpawnSettings{
 			$biomeType = self::BIOME_TYPE_DEFAULT;
 			$biomeName = '';
 		}
-=======
-	public static function read(NetworkBinaryStream $in) : self{
-		$biomeType = $in->getLShort();
-		$biomeName = $in->getString();
->>>>>>> upstream/stable
 		$dimension = $in->getVarInt();
 
 		return new self($biomeType, $biomeName, $dimension);
 	}
 
-<<<<<<< HEAD
 	public function write(NetworkBinaryStream $out, int $protocolId) : void{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$out->putLShort($this->biomeType);
 			$out->putString($this->biomeName);
 		}
-=======
-	public function write(NetworkBinaryStream $out) : void{
-		$out->putLShort($this->biomeType);
-		$out->putString($this->biomeName);
->>>>>>> upstream/stable
 		$out->putVarInt($this->dimension);
 	}
 }
