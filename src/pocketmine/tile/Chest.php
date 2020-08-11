@@ -159,8 +159,8 @@ class Chest extends Spawnable implements InventoryHolder, Container, Nameable{
 	}
 
 	public function getPair() : ?Chest{
-		if($this->isPaired()){
-			$tile = $this->getLevelNonNull()->getTileAt($this->pairX, $this->y, $this->pairZ);
+		if($this->isPaired() && ($level = $this->getLevel()) !== null){
+			$tile = $level->getTileAt($this->pairX, $this->y, $this->pairZ);
 			if($tile instanceof Chest){
 				return $tile;
 			}
