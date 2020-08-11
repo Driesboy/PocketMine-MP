@@ -137,7 +137,9 @@ class InventoryTransactionPacket extends DataPacket{
 
 		$this->putUnsignedVarInt($this->transactionType);
 
-		$this->putBool($this->hasItemStackIds);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
+			$this->putBool($this->hasItemStackIds);
+		}
 
 		$this->putUnsignedVarInt(count($this->actions));
 		foreach($this->actions as $action){

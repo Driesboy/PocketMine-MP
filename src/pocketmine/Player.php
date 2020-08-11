@@ -2437,7 +2437,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			}
 
 			try{
-				$this->craftingTransaction->validate($this->protocolId);
+				$this->craftingTransaction->validate($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0 ? ProtocolInfo::PROTOCOL_1_16_0 : ProtocolInfo::PROTOCOL_1_14_0);
 			}catch(TransactionValidationException $e){
 				//transaction is incomplete - crafting transaction comes in lots of little bits, so we have to collect
 				//all of the parts before we can execute it

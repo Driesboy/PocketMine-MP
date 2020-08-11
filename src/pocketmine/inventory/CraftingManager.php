@@ -29,10 +29,8 @@ use pocketmine\network\mcpe\protocol\CraftingDataPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\Server;
 use pocketmine\timings\Timings;
-use pocketmine\utils\AssumptionFailedError;
 use function array_map;
 use function file_get_contents;
-use function is_array;
 use function json_decode;
 use function json_encode;
 use function usort;
@@ -54,7 +52,6 @@ class CraftingManager{
 	}
 
 	public function init() : void{
-
 		$itemDeserializerFunc = \Closure::fromCallable([Item::class, 'jsonDeserialize']);
 
 		// 1.16 :)
@@ -173,7 +170,7 @@ class CraftingManager{
 	 * Returns a pre-compressed CraftingDataPacket for sending to players. Rebuilds the cache if it is not found.
 	 */
 	public function getCraftingDataPacket(int $protocolId) : BatchPacket{
-		if(empty($this->craftingDataCache[$protocolId])){
+		if(!isset($this->craftingDataCache[$protocolId])){
 			$this->buildCraftingDataCache($protocolId);
 		}
 
@@ -285,7 +282,7 @@ class CraftingManager{
 			}
 		}
 
-		if(isset($this->shapelessRecipes[$outputHash])){
+		if(isset($this->shapelessRecipes[$protocolId][$outputHash])){
 			foreach($this->shapelessRecipes[$protocolId][$outputHash] as $recipe){
 				if($recipe->matchesCraftingGrid($grid)){
 					return $recipe;
