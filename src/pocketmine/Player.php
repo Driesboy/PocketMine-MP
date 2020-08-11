@@ -377,8 +377,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $sleeping = null;
 	/** @var Position|null */
 	private $spawnPosition = null;
-	/** @var bool */
-	public $hasInventoryOpen = false;
 
 	//TODO: Abilities
 	/** @var bool */
@@ -1984,7 +1982,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$packet->clientData["CapeOnClassicSkin"] ?? false,
 			$packet->clientData["CapeId"] ?? "",
 			null,
-			$packet->clientData["ArmSize"] ?? "",
+			$packet->clientData["ArmSize"] ?? SkinData::ARM_SIZE_WIDE,
 			$packet->clientData["SkinColor"] ?? "",
 			$personaPieces,
 			$pieceTintColors,
@@ -2403,29 +2401,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$actions = [];
 		$isCraftingPart = false;
 		foreach($packet->actions as $networkInventoryAction){
-			if($this->protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
-				if(
-					$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO and (
-						$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
-						$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
-					)
-				){
-					$isCraftingPart = true;
-					if($networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT){
-						$isFinalCraftingPart = true;
-					}
-				}
-			}elseif(
-				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_CONTAINER and
-				$networkInventoryAction->windowId === ContainerIds::UI and
-				$networkInventoryAction->inventorySlot === 50 and
-				!$networkInventoryAction->oldItem->equalsExact($networkInventoryAction->newItem)
-			){
-				$isCraftingPart = true;
-				if(!$networkInventoryAction->oldItem->isNull() and $networkInventoryAction->newItem->isNull()){
-					$isFinalCraftingPart = true;
-				}
-			}elseif(
+			if(
 				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO and (
 					$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT or
 					$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
@@ -2461,7 +2437,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			}
 
 			try{
-				$this->craftingTransaction->validate();
+				$this->craftingTransaction->validate($this->protocolId);
 			}catch(TransactionValidationException $e){
 				//transaction is incomplete - crafting transaction comes in lots of little bits, so we have to collect
 				//all of the parts before we can execute it
@@ -3077,8 +3053,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$pk = new ContainerClosePacket();
 			$pk->windowId = $packet->windowId;
 			$this->sendDataPacket($pk);
-
-			$this->hasInventoryOpen = false;
 			return true;
 		}
 		if(isset($this->windowIndex[$packet->windowId])){

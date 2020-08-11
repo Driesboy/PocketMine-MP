@@ -54,48 +54,86 @@ class CraftingManager{
 	}
 
 	public function init() : void{
-		foreach ([
-			ProtocolInfo::PROTOCOL_1_16_0 =>  json_decode(file_get_contents(\pocketmine\RESOURCE_PATH . "vanilla" . DIRECTORY_SEPARATOR . "recipes.json"), true),
-			ProtocolInfo::PROTOCOL_1_14_0 => json_decode(file_get_contents(\pocketmine\RESOURCE_PATH . "recipes-1.14.json"), true),
-		] as $protocolId => $recipes){
-			$itemDeserializerFunc = \Closure::fromCallable([Item::class, 'jsonDeserialize']);
-			foreach($recipes as $recipe){
-				switch($recipe["type"]){
-					case "shapeless":
-						if($recipe["block"] !== "crafting_table"){ //TODO: filter others out for now to avoid breaking economics
-							break;
-						}
-						$this->registerShapelessRecipe($protocolId, new ShapelessRecipe(
-														   array_map($itemDeserializerFunc, $recipe["input"]),
-														   array_map($itemDeserializerFunc, $recipe["output"])
-													   ));
-						break;
-					case "shaped":
-						if($recipe["block"] !== "crafting_table"){ //TODO: filter others out for now to avoid breaking economics
-							break;
-						}
-						$this->registerShapedRecipe($protocolId, new ShapedRecipe(
-														$recipe["shape"],
-														array_map($itemDeserializerFunc, $recipe["input"]),
-														array_map($itemDeserializerFunc, $recipe["output"])
-													));
-						break;
-					case "smelting":
-						if($recipe["block"] !== "furnace"){ //TODO: filter others out for now to avoid breaking economics
-							break;
-						}
-						$this->registerFurnaceRecipe($protocolId, new FurnaceRecipe(
-														 Item::jsonDeserialize($recipe["output"]),
-														 Item::jsonDeserialize($recipe["input"]))
-						);
-						break;
-					default:
-						break;
-				}
+
+		$itemDeserializerFunc = \Closure::fromCallable([Item::class, 'jsonDeserialize']);
+
+		// 1.16 :)
+		$protocolId = ProtocolInfo::PROTOCOL_1_16_0;
+		$recipes = json_decode(file_get_contents(\pocketmine\RESOURCE_PATH . "vanilla" . DIRECTORY_SEPARATOR . "recipes.json"), true);
+
+		foreach($recipes["shapeless"] as $recipe){
+			if($recipe["block"] !== "crafting_table"){ //TODO: filter others out for now to avoid breaking economics
+				continue;
 			}
 
-			$this->buildCraftingDataCache($protocolId);
+			$this->registerShapelessRecipe($protocolId, new ShapelessRecipe(
+				array_map($itemDeserializerFunc, $recipe["input"]),
+				array_map($itemDeserializerFunc, $recipe["output"])
+			));
 		}
+		foreach($recipes["shaped"] as $recipe){
+			if($recipe["block"] !== "crafting_table"){ //TODO: filter others out for now to avoid breaking economics
+				continue;
+			}
+
+			$this->registerShapedRecipe($protocolId, new ShapedRecipe(
+				$recipe["shape"],
+				array_map($itemDeserializerFunc, $recipe["input"]),
+				array_map($itemDeserializerFunc, $recipe["output"])
+			));
+		}
+		foreach($recipes["smelting"] as $recipe){
+			if($recipe["block"] !== "furnace"){ //TODO: filter others out for now to avoid breaking economics
+				continue;
+			}
+
+			$this->registerFurnaceRecipe($protocolId, new FurnaceRecipe(
+				Item::jsonDeserialize($recipe["output"]),
+				Item::jsonDeserialize($recipe["input"]))
+			);
+		}
+
+		$this->buildCraftingDataCache($protocolId);
+
+		$protocolId = ProtocolInfo::PROTOCOL_1_14_0;
+		$recipes = json_decode(file_get_contents(\pocketmine\RESOURCE_PATH . "recipes-1.14.json"), true);
+
+		foreach($recipes as $recipe){
+			switch($recipe["type"]){
+				case "shapeless":
+					if($recipe["block"] !== "crafting_table"){ //TODO: filter others out for now to avoid breaking economics
+						break;
+					}
+					$this->registerShapelessRecipe($protocolId, new ShapelessRecipe(
+						array_map($itemDeserializerFunc, $recipe["input"]),
+						array_map($itemDeserializerFunc, $recipe["output"])
+					));
+					break;
+				case "shaped":
+					if($recipe["block"] !== "crafting_table"){ //TODO: filter others out for now to avoid breaking economics
+						break;
+					}
+					$this->registerShapedRecipe($protocolId, new ShapedRecipe(
+						$recipe["shape"],
+						array_map($itemDeserializerFunc, $recipe["input"]),
+						array_map($itemDeserializerFunc, $recipe["output"])
+					));
+					break;
+				case "smelting":
+					if($recipe["block"] !== "furnace"){ //TODO: filter others out for now to avoid breaking economics
+						break;
+					}
+					$this->registerFurnaceRecipe($protocolId, new FurnaceRecipe(
+						Item::jsonDeserialize($recipe["output"]),
+						Item::jsonDeserialize($recipe["input"]))
+					);
+					break;
+				default:
+					break;
+			}
+		}
+
+		$this->buildCraftingDataCache($protocolId);
 	}
 
 	/**
