@@ -21,35 +21,40 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\utils;
 
-use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
-use function mt_rand;
+/**
+ * @internal
+ * @see TextFormat::toJSON()
+ */
+final class TextFormatJsonObject implements \JsonSerializable{
+	/** @var string|null */
+	public $text = null;
+	/** @var string|null */
+	public $color = null;
+	/** @var bool|null */
+	public $bold = null;
+	/** @var bool|null */
+	public $italic = null;
+	/** @var bool|null */
+	public $underlined = null;
+	/** @var bool|null */
+	public $strikethrough = null;
+	/** @var bool|null */
+	public $obfuscated = null;
+	/**
+	 * @var TextFormatJsonObject[]|null
+	 * @phpstan-var array<int, TextFormatJsonObject>|null
+	 */
+	public $extra = null;
 
-class Potato extends Crops{
-
-	protected $id = self::POTATO_BLOCK;
-
-	public function __construct(int $meta = 0){
-		$this->meta = $meta;
-	}
-
-	public function getName() : string{
-		return "Potato Block";
-	}
-
-	public function getDropsForCompatibleTool(Item $item) : array{
-		$result = [
-			ItemFactory::get(Item::POTATO, 0, $this->getDamage() >= 0x07 ? mt_rand(1, 5) : 1)
-		];
-		if($this->getDamage() >= 7 && mt_rand(0, 49) === 0){
-			$result[] = ItemFactory::get(Item::POISONOUS_POTATO);
+	public function jsonSerialize(){
+		$result = (array) $this;
+		foreach($result as $k => $v){
+			if($v === null){
+				unset($result[$k]);
+			}
 		}
 		return $result;
-	}
-
-	public function getPickedItem() : Item{
-		return ItemFactory::get(Item::POTATO);
 	}
 }

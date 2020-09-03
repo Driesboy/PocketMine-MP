@@ -1608,10 +1608,15 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$dy = $newPos->y - $this->y;
 			$dz = $newPos->z - $this->z;
 
+			//the client likes to clip into blocks like stairs, but we do full server-side prediction of that without
+			//help from the client's position changes, so we deduct the expected clip height from the moved distance.
+			$expectedClipDistance = $this->ySize * (1 - self::STEP_CLIP_MULTIPLIER);
+			$dy -= $expectedClipDistance;
 			$this->move($dx, $dy, $dz);
 
 			$diff = $this->distanceSquared($newPos);
 
+			//TODO: Explore lowering this threshold now that stairs work properly.
 			if($this->isSurvival() and $diff > 0.0625){
 				$ev = new PlayerIllegalMoveEvent($this, $newPos, new Vector3($this->lastX, $this->lastY, $this->lastZ));
 				$ev->setCancelled($this->allowMovementCheats);
@@ -1621,7 +1626,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 				if(!$ev->isCancelled()){
 					$revert = true;
 					$this->server->getLogger()->debug($this->getServer()->getLanguage()->translateString("pocketmine.player.invalidMove", [$this->getName()]));
-					$this->server->getLogger()->debug("Old position: " . $this->asVector3() . ", new position: " . $newPos);
+					$this->server->getLogger()->debug("Old position: " . $this->asVector3() . ", new position: " . $newPos . ", expected clip distance: $expectedClipDistance");
 				}
 			}
 
@@ -2888,7 +2893,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 				$target = $this->level->getBlock($pos);
 
 				$ev = new PlayerInteractEvent($this, $this->inventory->getItemInHand(), $target, null, $packet->face, PlayerInteractEvent::LEFT_CLICK_BLOCK);
-				if($this->level->checkSpawnProtection($this, $target)){
+				if($this->isSpectator() || $this->level->checkSpawnProtection($this, $target)){
 					$ev->setCancelled();
 				}
 
@@ -3914,10 +3919,12 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		if($targets !== null){
 			if(in_array($this, $targets, true)){
 				$this->forceMoveSync = $pos->asVector3();
+				$this->ySize = 0;
 			}
 			$this->server->broadcastPacket($targets, $pk);
 		}else{
 			$this->forceMoveSync = $pos->asVector3();
+			$this->ySize = 0;
 			$this->dataPacket($pk);
 		}
 	}
