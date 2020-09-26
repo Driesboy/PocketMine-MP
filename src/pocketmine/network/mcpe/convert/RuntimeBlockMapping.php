@@ -24,17 +24,20 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\convert;
 
 use pocketmine\block\BlockIds;
+use pocketmine\nbt\BigEndianNBTStream;
 use pocketmine\nbt\NBT;
 use pocketmine\nbt\NetworkLittleEndianNBTStream;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\NetworkBinaryStream;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use function file_get_contents;
 use function getmypid;
 use function json_decode;
 use function mt_rand;
 use function mt_srand;
 use function shuffle;
+use function var_dump;
 
 /**
  * @internal
@@ -53,14 +56,14 @@ final class RuntimeBlockMapping{
 	}
 
 	public static function init() : void{
-		$tag = (new NetworkLittleEndianNBTStream())->read(file_get_contents(\pocketmine\RESOURCE_PATH . "vanilla/required_block_states.nbt"));
-		if(!($tag instanceof ListTag) or $tag->getTagType() !== NBT::TAG_Compound){ //this is a little redundant currently, but good for auto complete and makes phpstan happy
+		$tag = (new BigEndianNBTStream())->read(gzdecode(file_get_contents(\pocketmine\RESOURCE_PATH . "vanilla/required_block_states.nbt")));
+		if(!($tag instanceof CompoundTag)){
 			throw new \RuntimeException("Invalid blockstates table, expected TAG_List<TAG_Compound> root");
 		}
 
-		/** @var CompoundTag[] $list */
-		$list = $tag->getValue();
-		self::$bedrockKnownStates = self::randomizeTable($list);
+		$list = $tag->getListTag("blocks")->getValue();
+		var_dump($list);
+		self::$bedrockKnownStates = $list;
 
 		self::setupLegacyMappings();
 	}
@@ -90,7 +93,7 @@ final class RuntimeBlockMapping{
 		 */
 		$idToStatesMap = [];
 		foreach(self::$bedrockKnownStates as $k => $state){
-			$idToStatesMap[$state->getCompoundTag("block")->getString("name")][] = $k;
+			$idToStatesMap[$state->getString("name")][] = $k;
 		}
 		foreach($legacyStateMap as $pair){
 			$id = $legacyIdMap[$pair->getId()] ?? null;
@@ -111,11 +114,9 @@ final class RuntimeBlockMapping{
 				throw new \RuntimeException("Mapped new state does not appear in network table");
 			}
 			foreach($idToStatesMap[$mappedName] as $k){
-				$networkState = self::$bedrockKnownStates[$k];
-				if($mappedState->equals($networkState->getCompoundTag("block"))){
-					self::registerMapping($k, $id, $data);
-					continue 2;
-				}
+				self::registerMapping($k, $id, $data);
+
+				continue 2;
 			}
 			throw new \RuntimeException("Mapped new state does not appear in network table");
 		}
@@ -125,23 +126,6 @@ final class RuntimeBlockMapping{
 		if(self::$bedrockKnownStates === null){
 			self::init();
 		}
-	}
-
-	/**
-	 * Randomizes the order of the runtimeID table to prevent plugins relying on them.
-	 * Plugins shouldn't use this stuff anyway, but plugin devs have an irritating habit of ignoring what they
-	 * aren't supposed to do, so we have to deliberately break it to make them stop.
-	 *
-	 * @param CompoundTag[] $table
-	 *
-	 * @return CompoundTag[]
-	 */
-	private static function randomizeTable(array $table) : array{
-		$postSeed = mt_rand(); //save a seed to set afterwards, to avoid poor quality randoms
-		mt_srand(getmypid()); //Use a seed which is the same on all threads. This isn't a secure seed, but we don't care.
-		shuffle($table);
-		mt_srand($postSeed); //restore a good quality seed that isn't dependent on PID
-		return $table;
 	}
 
 	public static function toStaticRuntimeId(int $id, int $meta = 0) : int{
@@ -171,7 +155,7 @@ final class RuntimeBlockMapping{
 	/**
 	 * @return CompoundTag[]
 	 */
-	public static function getBedrockKnownStates() : array{
+	public static function getBedrockKnownStates(int $protocolId) : array{
 		self::lazyInit();
 		return self::$bedrockKnownStates;
 	}

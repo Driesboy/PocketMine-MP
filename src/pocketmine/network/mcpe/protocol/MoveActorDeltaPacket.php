@@ -44,11 +44,11 @@ class MoveActorDeltaPacket extends DataPacket{
 	public $entityRuntimeId;
 	/** @var int */
 	public $flags;
-	/** @var int */
+	/** @var float */
 	public $xDiff = 0;
-	/** @var int */
+	/** @var float */
 	public $yDiff = 0;
-	/** @var int */
+	/** @var float */
 	public $zDiff = 0;
 	/** @var float */
 	public $xRot = 0.0;
@@ -57,8 +57,12 @@ class MoveActorDeltaPacket extends DataPacket{
 	/** @var float */
 	public $zRot = 0.0;
 
-	private function maybeReadCoord(int $flag) : int{
+	private function maybeReadCoord(int $protocolId, int $flag) : float{
 		if(($this->flags & $flag) !== 0){
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+				return $this->getLFloat();
+			}
+
 			return $this->getVarInt();
 		}
 		return 0;
@@ -74,16 +78,20 @@ class MoveActorDeltaPacket extends DataPacket{
 	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->flags = $this->getLShort();
-		$this->xDiff = $this->maybeReadCoord(self::FLAG_HAS_X);
-		$this->yDiff = $this->maybeReadCoord(self::FLAG_HAS_Y);
-		$this->zDiff = $this->maybeReadCoord(self::FLAG_HAS_Z);
+		$this->xDiff = $this->maybeReadCoord($protocolId,self::FLAG_HAS_X);
+		$this->yDiff = $this->maybeReadCoord($protocolId,self::FLAG_HAS_Y);
+		$this->zDiff = $this->maybeReadCoord($protocolId,self::FLAG_HAS_Z);
 		$this->xRot = $this->maybeReadRotation(self::FLAG_HAS_ROT_X);
 		$this->yRot = $this->maybeReadRotation(self::FLAG_HAS_ROT_Y);
 		$this->zRot = $this->maybeReadRotation(self::FLAG_HAS_ROT_Z);
 	}
 
-	private function maybeWriteCoord(int $flag, int $val) : void{
+	private function maybeWriteCoord(int $protocolId, int $flag, int $val) : void{
 		if(($this->flags & $flag) !== 0){
+			if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+				$this->putLFloat($val);
+			}
+
 			$this->putVarInt($val);
 		}
 	}
@@ -97,12 +105,16 @@ class MoveActorDeltaPacket extends DataPacket{
 	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putLShort($this->flags);
-		$this->maybeWriteCoord(self::FLAG_HAS_X, $this->xDiff);
-		$this->maybeWriteCoord(self::FLAG_HAS_Y, $this->yDiff);
-		$this->maybeWriteCoord(self::FLAG_HAS_Z, $this->zDiff);
+		$this->maybeWriteCoord($protocolId, self::FLAG_HAS_X, $this->xDiff);
+		$this->maybeWriteCoord($protocolId, self::FLAG_HAS_Y, $this->yDiff);
+		$this->maybeWriteCoord($protocolId, self::FLAG_HAS_Z, $this->zDiff);
 		$this->maybeWriteRotation(self::FLAG_HAS_ROT_X, $this->xRot);
 		$this->maybeWriteRotation(self::FLAG_HAS_ROT_Y, $this->yRot);
 		$this->maybeWriteRotation(self::FLAG_HAS_ROT_Z, $this->zRot);
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_100, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

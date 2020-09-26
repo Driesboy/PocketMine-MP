@@ -37,15 +37,27 @@ class SetActorDataPacket extends DataPacket{
 	 * @phpstan-var array<int, array{0: int, 1: mixed}>
 	 */
 	public $metadata;
+	/** @var int */
+	public $tick;
 
 	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->metadata = $this->getEntityMetadata();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->tick = $this->getUnsignedVarLong();
+		}
 	}
 
 	protected function encodePayload(int $protocolId){
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putEntityMetadata($this->metadata);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->putUnsignedVarLong($this->tick);
+		}
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_100, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

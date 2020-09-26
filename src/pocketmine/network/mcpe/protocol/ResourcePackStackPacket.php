@@ -26,6 +26,7 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\types\ExperimentData;
 use pocketmine\resourcepacks\ResourcePack;
 use function count;
 
@@ -40,6 +41,8 @@ class ResourcePackStackPacket extends DataPacket{
 	/** @var ResourcePack[] */
 	public $resourcePackStack = [];
 
+	/** @var ExperimentData[] */
+	private $experiments = [];
 	/** @var bool */
 	public $isExperimental = false;
 	/** @var string */
@@ -61,8 +64,15 @@ class ResourcePackStackPacket extends DataPacket{
 			$this->getString();
 		}
 
-		$this->isExperimental = $this->getBool();
+		if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+			$this->isExperimental = $this->getBool();
+		}
+
 		$this->baseGameVersion = $this->getString();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->experiments = $this->getExperiments();
+			$this->isExperimental = $this->getBool();
+		}
 	}
 
 	protected function encodePayload(int $protocolId){
@@ -82,8 +92,18 @@ class ResourcePackStackPacket extends DataPacket{
 			$this->putString(""); //TODO: subpack name
 		}
 
-		$this->putBool($this->isExperimental);
+		if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+			$this->putBool($this->isExperimental);
+		}
 		$this->putString($this->baseGameVersion);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->putExperiments($this->experiments);
+			$this->putBool($this->isExperimental);
+		}
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_100, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

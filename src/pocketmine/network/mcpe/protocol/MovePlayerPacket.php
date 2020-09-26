@@ -56,6 +56,8 @@ class MovePlayerPacket extends DataPacket{
 	public $teleportCause = 0;
 	/** @var int */
 	public $teleportItem = 0;
+	/** @var int */
+	public $tick;
 
 	protected function decodePayload(int $protocolId){
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
@@ -69,6 +71,9 @@ class MovePlayerPacket extends DataPacket{
 		if($this->mode === MovePlayerPacket::MODE_TELEPORT){
 			$this->teleportCause = $this->getLInt();
 			$this->teleportItem = $this->getLInt();
+		}
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->tick = $this->getUnsignedVarLong();
 		}
 	}
 
@@ -85,6 +90,13 @@ class MovePlayerPacket extends DataPacket{
 			$this->putLInt($this->teleportCause);
 			$this->putLInt($this->teleportItem);
 		}
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->putUnsignedVarLong($this->tick);
+		}
+	}
+
+	public function getProtocolVersions() : array{
+		return [ProtocolInfo::PROTOCOL_1_16_100, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

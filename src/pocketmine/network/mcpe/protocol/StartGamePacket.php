@@ -27,11 +27,13 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\math\Vector3;
 use pocketmine\nbt\NetworkLittleEndianNBTStream;
+use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\NetworkBinaryStream;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\types\EducationEditionOffer;
+use pocketmine\network\mcpe\protocol\types\ExperimentData;
 use pocketmine\network\mcpe\protocol\types\GameRuleType;
 use pocketmine\network\mcpe\protocol\types\GeneratorType;
 use pocketmine\network\mcpe\protocol\types\MultiplayerGameVisibility;
@@ -40,10 +42,15 @@ use pocketmine\network\mcpe\protocol\types\SpawnSettings;
 use function count;
 use function file_get_contents;
 use function json_decode;
+use function var_dump;
 use const pocketmine\RESOURCE_PATH;
 
 class StartGamePacket extends DataPacket{
 	public const NETWORK_ID = ProtocolInfo::START_GAME_PACKET;
+
+	public const AUTHORITATIVE_MOVEMENT_MODE_CLIENT = 0;
+	public const AUTHORITATIVE_MOVEMENT_MODE_SERVER = 1;
+	public const AUTHORITATIVE_MOVEMENT_MODE_SERVER_WITH_REWIND = 2;
 
 	/** @var string|null */
 	private static $blockTableCache = null;
@@ -116,6 +123,10 @@ class StartGamePacket extends DataPacket{
 	public $gameRules = [ //TODO: implement this
 		"naturalregeneration" => [GameRuleType::BOOL, false] //Hack for client side regeneration
 	];
+	/** @var ExperimentData[] */
+	public $experiments = [];
+	/** @var bool */
+	public $hadExperimentsToggled = false;
 	/** @var bool */
 	public $hasBonusChestEnabled = false;
 	/** @var bool */
@@ -160,7 +171,7 @@ class StartGamePacket extends DataPacket{
 	/** @var bool */
 	public $isTrial = false;
 	/** @var bool */
-	public $isMovementServerAuthoritative = false;
+	public $authoritativeMovementMode = self::AUTHORITATIVE_MOVEMENT_MODE_CLIENT;
 	/** @var int */
 	public $currentTick = 0; //only used if isTrial is true
 	/** @var int */
@@ -168,8 +179,11 @@ class StartGamePacket extends DataPacket{
 	/** @var string */
 	public $multiplayerCorrelationId = ""; //TODO: this should be filled with a UUID of some sort
 
-	/** @var ListTag|null */
-	public $blockTable = null;
+	/** @var CompoundTag[] */
+	public $blockTable = [];
+	/** @var array */
+	public $blockCache = [];
+
 	/**
 	 * @var int[]|null string (name) => int16 (legacyID)
 	 * @phpstan-var array<string, int>|null
@@ -212,6 +226,10 @@ class StartGamePacket extends DataPacket{
 		$this->commandsEnabled = $this->getBool();
 		$this->isTexturePacksRequired = $this->getBool();
 		$this->gameRules = $this->getGameRules();
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->experiments = $this->getExperiments();
+			$this->hadExperimentsToggled = $this->getBool();
+		}
 		$this->hasBonusChestEnabled = $this->getBool();
 		$this->hasStartWithMapEnabled = $this->getBool();
 		$this->defaultPlayerPermission = $this->getVarInt();
@@ -239,16 +257,31 @@ class StartGamePacket extends DataPacket{
 		$this->worldName = $this->getString();
 		$this->premiumWorldTemplateId = $this->getString();
 		$this->isTrial = $this->getBool();
-		$this->isMovementServerAuthoritative = $this->getBool();
+		if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+			$this->authoritativeMovementMode = $this->getBool() ? self::AUTHORITATIVE_MOVEMENT_MODE_SERVER : self::AUTHORITATIVE_MOVEMENT_MODE_CLIENT;
+		} else {
+			$this->authoritativeMovementMode = $this->getUnsignedVarInt();
+		}
 		$this->currentTick = $this->getLLong();
 
 		$this->enchantmentSeed = $this->getVarInt();
 
-		$blockTable = (new NetworkLittleEndianNBTStream())->read($this->buffer, false, $this->offset, 512);
-		if(!($blockTable instanceof ListTag)){
-			throw new \UnexpectedValueException("Wrong block table root NBT tag type");
+		if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+			$blockTable = (new NetworkLittleEndianNBTStream())->read($this->buffer, false, $this->offset, 512);
+			if(!($blockTable instanceof ListTag)){
+				throw new \UnexpectedValueException("Wrong block table root NBT tag type");
+			}
+			$this->blockTable = $blockTable;
+		} else {
+			for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
+				$name = $this->getString();
+				/** @var CompoundTag $properties */
+				$properties = (new NetworkLittleEndianNBTStream())->read($this->buffer, false, $this->offset, 512);
+
+				$properties->getCompoundTag("block")->setString("name", $name);
+				$this->blockTable[] = $properties;
+			}
 		}
-		$this->blockTable = $blockTable;
 
 		$this->itemTable = [];
 		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
@@ -298,6 +331,10 @@ class StartGamePacket extends DataPacket{
 		$this->putBool($this->commandsEnabled);
 		$this->putBool($this->isTexturePacksRequired);
 		$this->putGameRules($this->gameRules);
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->putExperiments($this->experiments);
+			$this->putBool($this->hadExperimentsToggled);
+		}
 		$this->putBool($this->hasBonusChestEnabled);
 		$this->putBool($this->hasStartWithMapEnabled);
 		$this->putVarInt($this->defaultPlayerPermission);
@@ -324,20 +361,17 @@ class StartGamePacket extends DataPacket{
 		$this->putString($this->worldName);
 		$this->putString($this->premiumWorldTemplateId);
 		$this->putBool($this->isTrial);
-		$this->putBool($this->isMovementServerAuthoritative);
+		if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+			$this->putBool($this->authoritativeMovementMode === self::AUTHORITATIVE_MOVEMENT_MODE_CLIENT);
+		} else {
+			$this->putUnsignedVarInt($this->authoritativeMovementMode);
+		}
 		$this->putLLong($this->currentTick);
 
 		$this->putVarInt($this->enchantmentSeed);
 
-		if($this->blockTable === null){
-			if(self::$blockTableCache === null){
-				//this is a really nasty hack, but it'll do for now
-				self::$blockTableCache = (new NetworkLittleEndianNBTStream())->write(new ListTag("", RuntimeBlockMapping::getBedrockKnownStates()));
-			}
-			$this->put(self::$blockTableCache);
-		}else{
-			$this->put((new NetworkLittleEndianNBTStream())->write($this->blockTable));
-		}
+		$this->put($this->serializeBlockTable($protocolId));
+
 		if($this->itemTable === null){
 			if(self::$itemTableCache === null){
 				self::$itemTableCache = self::serializeItemTable(json_decode(file_get_contents(RESOURCE_PATH . '/vanilla/item_id_map.json'), true));
@@ -351,6 +385,34 @@ class StartGamePacket extends DataPacket{
 		if($protocolId >= ProtocolInfo::PROTOCOL_1_16_0){
 			$this->putBool($this->enableNewInventorySystem);
 		}
+	}
+
+	/**
+	 * @param int           $protocolId
+	 * @param CompoundTag[] $table
+	 *
+	 * @return string
+	 * @phpstan-param array<string, CompoundTag> $table
+	 */
+	private function serializeBlockTable(int $protocolId) : string{
+		if(!isset($this->blockCache[$protocolId])){
+			if($protocolId < ProtocolInfo::PROTOCOL_1_16_100){
+				$this->blockCache[$protocolId] = (new NetworkLittleEndianNBTStream())->write(new ListTag("", RuntimeBlockMapping::getBedrockKnownStates($protocolId)));
+			} else {
+				$stream = new NetworkBinaryStream();
+				$stream->putUnsignedVarInt(count($table = RuntimeBlockMapping::getBedrockKnownStates($protocolId)));
+
+				foreach($table as $block){
+					$stream->putString($block->getString("name"));
+					var_dump((new NetworkLittleEndianNBTStream())->write(new ListTag('', $block->getCompoundTag("states")->getValue())));
+					$stream->put((new NetworkLittleEndianNBTStream())->write(new ListTag('', $block->getCompoundTag("states")->getValue())));
+				}
+
+				$this->blockCache[$protocolId] =  $stream->getBuffer();
+			}
+		}
+
+		return $this->blockCache[$protocolId];
 	}
 
 	/**
@@ -368,7 +430,7 @@ class StartGamePacket extends DataPacket{
 	}
 
 	public function getProtocolVersions() : array{
-		return [ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
+		return [ProtocolInfo::PROTOCOL_1_16_100, ProtocolInfo::PROTOCOL_1_16_0, ProtocolInfo::PROTOCOL_1_14_0];
 	}
 
 	public function handle(NetworkSession $session) : bool{

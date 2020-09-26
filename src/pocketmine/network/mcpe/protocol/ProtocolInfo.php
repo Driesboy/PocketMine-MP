@@ -40,15 +40,16 @@ interface ProtocolInfo{
 	public const PROTOCOL_1_14_60 = 390;
 	public const PROTOCOL_1_16_0 = 407;
 	public const PROTOCOL_1_16_20 = 408;
+	public const PROTOCOL_1_16_100 = 416;
 
 	/** Actual Minecraft: PE protocol version */
-	public const CURRENT_PROTOCOL = self::PROTOCOL_1_16_20;
+	public const CURRENT_PROTOCOL = self::PROTOCOL_1_16_100;
 	/** Array of all accepted protocol versions */
-	public const ACCEPTED_PROTOCOLS = [self::CURRENT_PROTOCOL, self::PROTOCOL_1_16_0, self::PROTOCOL_1_14_60, self::PROTOCOL_1_14_0];
+	public const ACCEPTED_PROTOCOLS = [self::CURRENT_PROTOCOL, self::PROTOCOL_1_16_20, self::PROTOCOL_1_16_0, self::PROTOCOL_1_14_60, self::PROTOCOL_1_14_0];
 	/** Current Minecraft PE version reported by the server. This is usually the earliest currently supported version. */
-	public const MINECRAFT_VERSION = 'v1.16.20';
+	public const MINECRAFT_VERSION = 'v1.16.100.55';
 	/** Version number sent to clients in ping responses. */
-	public const MINECRAFT_VERSION_NETWORK = '1.16.20';
+	public const MINECRAFT_VERSION_NETWORK = '1.16.100';
 
 	public const LOGIN_PACKET = 0x01;
 	public const PLAY_STATUS_PACKET = 0x02;

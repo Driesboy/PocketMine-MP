@@ -38,6 +38,7 @@ use pocketmine\nbt\tag\IntTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\CommandOriginData;
 use pocketmine\network\mcpe\protocol\types\EntityLink;
+use pocketmine\network\mcpe\protocol\types\ExperimentData;
 use pocketmine\network\mcpe\protocol\types\GameRuleType;
 use pocketmine\network\mcpe\protocol\types\PersonaPieceTintColor;
 use pocketmine\network\mcpe\protocol\types\PersonaSkinPiece;
@@ -80,6 +81,30 @@ class NetworkBinaryStream extends BinaryStream{
 		$this->putLInt($uuid->getPart(0));
 		$this->putLInt($uuid->getPart(3));
 		$this->putLInt($uuid->getPart(2));
+	}
+
+	/**
+	 * @return ExperimentData[]
+	 */
+	public function getExperiments() : array{
+		$result = [];
+
+		for($i = 0, $count = $this->getLInt();  $i < $count; ++$i){
+			$result[] = new ExperimentData($this->getString(), $this->getBool());
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param ExperimentData[] $experiments
+	 */
+	public function putExperiments(array $experiments) : void{
+		$this->putLInt(count($experiments));
+		foreach($experiments as $experiment){
+			$this->putString($experiment->getName());
+			$this->putBool($experiment->isEnabled());
+		}
 	}
 
 	public function getSkin(int $protocolId) : SkinData{

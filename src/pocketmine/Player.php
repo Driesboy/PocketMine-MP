@@ -3915,6 +3915,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$pk->yaw = $yaw;
 		$pk->mode = $mode;
 		$pk->onGround = $this->onGround;
+		$pk->tick = $this->server->getTick();
 
 		if($targets !== null){
 			if(in_array($this, $targets, true)){
