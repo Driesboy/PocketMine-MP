@@ -80,6 +80,7 @@ use function count;
 use function current;
 use function deg2rad;
 use function floor;
+use function fmod;
 use function get_class;
 use function in_array;
 use function is_a;
@@ -1312,7 +1313,7 @@ abstract class Entity extends Location implements Metadatable, EntityIds{
 	}
 
 	public function getDirection() : ?int{
-		$rotation = ($this->yaw - 90) % 360;
+		$rotation = fmod($this->yaw - 90, 360);
 		if($rotation < 0){
 			$rotation += 360.0;
 		}
@@ -1450,8 +1451,14 @@ abstract class Entity extends Location implements Metadatable, EntityIds{
 				$this->fall($this->fallDistance);
 				$this->resetFallDistance();
 			}
-		}elseif($distanceThisTick < 0){
+		}elseif($distanceThisTick < $this->fallDistance){
+			//we've fallen some distance (distanceThisTick is negative)
+			//or we ascended back towards where fall distance was measured from initially (distanceThisTick is positive but less than existing fallDistance)
 			$this->fallDistance -= $distanceThisTick;
+		}else{
+			//we ascended past the apex where fall distance was originally being measured from
+			//reset it so it will be measured starting from the new, higher position
+			$this->fallDistance = 0;
 		}
 	}
 
